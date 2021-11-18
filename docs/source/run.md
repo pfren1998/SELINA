@@ -17,8 +17,8 @@ optional arguments:
 
 In this step, two output files that will be used in the next step will be generated
 
-- `pre-trained_meta.pkl` : a file containing all parameters of the trained model
-- `pre-trained_params.pt`: a files containing the cell types of the reference data
+- `pre-trained_params.pt`: a file containing all parameters of the trained model
+- `pre-trained_meta.pkl`: a files containing the cell types of the reference data
 
 ## Predict
 
