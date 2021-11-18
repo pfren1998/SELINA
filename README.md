@@ -1,2 +1,3 @@
 # SELINA
-automatic single cell annotation tools based on large-scale reference data
+## Documentation
+https://selina.readthedocs.io/en/latest/index.html
