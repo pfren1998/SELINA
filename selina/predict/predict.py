@@ -1,0 +1,235 @@
+import torch
+from torch.autograd import Function
+import torch.nn as nn
+import datatable as dt
+import pandas as pd
+import numpy as np
+from functools import reduce
+from torch.utils.data import Dataset
+from tqdm import tqdm
+from torch.utils.data import DataLoader
+import torch.nn.functional as F
+import argparse as ap
+from selina.train import read_expr, GRL, MADA
+import pickle
+from functools import reduce
+import os
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+params_tune1 = [0.0005, 50, 128]
+params_tune2 = [0.0001, 10, 128]
+
+
+def predict_parser(subparsers):
+    workflow = subparsers.add_parser(
+        'predict', help='Fine-tuning and predict for the query data. ')
+    group_predict = workflow.add_argument_group('Arguments for prediction.')
+    group_predict.add_argument(
+        '--mode',
+        type=str,
+        required=True,
+        choices=['single', 'cluster'],
+        help='Single-cell level input or cluster level input.')
+    group_predict.add_argument('--input',
+                               type=str,
+                               required=True,
+                               help='File path of query data.')
+    group_predict.add_argument('--model',
+                               type=str,
+                               required=True,
+                               help='File path of the pre-trained model.')
+    group_predict.add_argument('--path_out',
+                               type=str,
+                               required=True,
+                               help='File path of the output files.')
+    group_predict.add_argument(
+        '--outprefix',
+        type=str,
+        required=False,
+        default='query',
+        help='Prefix of the output files. DEFAULT: query')
+    group_plot = workflow.add_argument_group('Arguments for plot')
+    group_plot.add_argument(
+        '--plot',
+        type=str,
+        required=True,
+        choices=['True', 'False'],
+        default='False',
+        help='Whether to generate umap plot. DEFAULT: False')
+    group_plot.add_argument('--rds',
+                            type=str,
+                            required=False,
+                            help='File path of rds file.')
+
+
+def merge(genes, query_expr):
+    model_expr = pd.DataFrame(np.random.randn(len(genes), 1))
+    model_expr.columns = ['genes']
+    model_expr.index = genes
+    query_expr = pd.DataFrame.join(model_expr, query_expr).drop('genes',
+                                                                axis=1)
+    query_expr = query_expr.fillna(0)
+    query_expr = np.divide(query_expr, np.sum(query_expr, axis=0)) * 10000
+    query_expr = np.log2(query_expr + 1)
+    return query_expr
+
+
+class Datasets(Dataset):
+    def __init__(self, data):
+        self.expr = data.values
+
+    def __getitem__(self, index):
+        return torch.as_tensor(self.expr[:, index])
+
+    def __len__(self):
+        return self.expr.shape[1]
+
+
+class Autoencoder(nn.Module):
+    def __init__(self, network, nfeature, nct):
+        super(Autoencoder, self).__init__()
+        encoder = list(network.feature.children()) + list(
+            network.class_classifier.children())
+        encoder_index = [0, 1, 3, 4, 6]
+        self.encoder = nn.Sequential(*[encoder[i] for i in encoder_index],
+                                     nn.ReLU())
+        self.decoder = nn.Sequential(
+            nn.Linear(in_features=nct, out_features=50), nn.ReLU(),
+            nn.Linear(in_features=50, out_features=100), nn.ReLU(),
+            nn.Linear(in_features=100, out_features=nfeature))
+
+    def forward(self, input_data):
+        output = self.decoder(self.encoder(input_data))
+        return (output)
+
+
+class Classifier(nn.Module):
+    def __init__(self, network):
+        super(Classifier, self).__init__()
+        self.classifier = nn.Sequential(*list(network.encoder.children())[:-1],
+                                        nn.Softmax(dim=1))
+
+    def forward(self, input_data):
+        output = self.classifier(input_data)
+        return (output)
+
+
+def tune1(test_df, network, params):
+    test_dat = Datasets(test_df)
+    lr = params[0]
+    n_epoch = params[1]
+    batch_size = params[2]
+    optimizer = torch.optim.Adam(network.parameters(), lr=lr)
+    loss = nn.MSELoss()
+    loss = loss.to(device)
+    test_loader = DataLoader(dataset=test_dat,
+                             batch_size=batch_size,
+                             shuffle=True)
+    for name, paras in network.encoder.named_parameters():
+        paras.requires_grad = False
+    network = network.to(device)
+    for epoch in tqdm(range(n_epoch)):
+        for batch in test_loader:
+            expr = batch
+            expr = expr.float()
+            expr = expr.to(device)
+            output = network(expr)
+            err = loss(output, expr)
+            optimizer.zero_grad()
+            err.backward()
+            optimizer.step()
+    print('Finish Tuning1')
+    return network
+
+
+def tune2(test_df, network, params):
+    test_dat = Datasets(test_df)
+    lr = params[0]
+    n_epoch = params[1]
+    batch_size = params[2]
+    optimizer = torch.optim.Adam(network.parameters(), lr=lr)
+    loss = nn.MSELoss()
+    loss = loss.to(device)
+    test_loader = DataLoader(dataset=test_dat,
+                             batch_size=batch_size,
+                             shuffle=True)
+    for name, paras in network.encoder.named_parameters():
+        paras.requires_grad = True
+    for name, paras in network.decoder.named_parameters():
+        paras.requires_grad = False
+    network = network.to(device)
+    for epoch in tqdm(range(n_epoch)):
+        for batch in test_loader:
+            expr = batch
+            expr = expr.float()
+            expr = expr.to(device)
+            output = network(expr)
+            err = loss(output, expr)
+            optimizer.zero_grad()
+            err.backward()
+            optimizer.step()
+    print('Finish Tuning2')
+    return network
+
+
+def test(test_df, network, ct_dic):
+    test_dat = Datasets(test_df)
+    pred_prob = []
+    ct_dic_rev = {v: k for k, v in ct_dic.items()}
+    test_loader = DataLoader(dataset=test_dat,
+                             batch_size=test_df.shape[1],
+                             shuffle=False)
+    with torch.no_grad():
+        pred_labels = []
+        for batch in test_loader:
+            expr = batch
+            expr = expr.float()
+            expr = expr.to(device)
+            class_output = network(expr)
+            class_output
+            pred_labels.append(
+                class_output.argmax(dim=1).cpu().numpy().tolist())
+            pred_prob.append(class_output.cpu().numpy())
+        pred_labels = [ct_dic_rev[i] for item in pred_labels for i in item]
+        pred_labels = pd.DataFrame({
+            'Cell': test_df.columns,
+            'Prediction': pred_labels
+        })
+        pred_prob = pd.DataFrame(reduce(pd.concat, pred_prob))
+        pred_prob.index = test_df.columns
+        pred_prob.columns = ct_dic.keys()
+    return pred_labels, pred_prob
+
+
+def query_predict(input, model, path_out, outprefix):
+    print('Loading data')
+    query_expr = read_expr(input)
+    with open(model.replace('params', 'meta').replace('pt', 'pkl'), 'rb') as f:
+        meta = pickle.load(f)
+    genes, ct_dic = meta['genes'], meta['celltypes']
+    query_expr = merge(genes, query_expr)
+    nfeatures, nct = len(genes), len(ct_dic)
+    network = torch.load(model)
+    network.train()
+    network = Autoencoder(network, nfeatures, nct)
+    print('Fine-tuning1')
+    network = tune1(query_expr, network, params_tune1)
+    print('Fine-tuning2')
+    network = tune2(query_expr, network, params_tune2)
+    network = Classifier(network).to(device)
+    pred_labels, pred_prob = test(query_expr, network, ct_dic)
+    pd.DataFrame(pred_labels).to_csv(path_out + outprefix + '_predictions.txt',
+                                     index=False,
+                                     header=True,
+                                     sep='\t')
+    pd.DataFrame(pred_prob).to_csv(path_out + outprefix + '_probability.txt',
+                                   index=True,
+                                   header=True,
+                                   sep='\t')
+    print('Finish Prediction')
+
+def query_plot(rds,path_out,outprefix,mode):
+    print('Plotting')
+    cmd = 'Rscript ' + os.path.split(os.path.abspath(__file__))[0] + '/plot.R ' + ' --rds ' + rds + ' --celltype ' + path_out + outprefix + '_predictions.txt' + ' --path_out ' + path_out + ' --mode ' + mode
+    os.system(cmd)
+    print('Finish plotting')
