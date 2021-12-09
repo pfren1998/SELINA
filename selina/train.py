@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import argparse as ap
 import pickle
+from imblearn.over_sampling import SMOTE
+from collections import Counter
 
 params_train = [0.0001, 50, 128]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -52,28 +54,75 @@ def label2dic(label):
     return dic
 
 
-def preprocessing(path_in):
+def preprocessing_sample(path_in):
     samples = sorted(glob.glob(path_in + '/*_expr.txt'))
-    metas = sorted(glob.glob(path_in + '/*_meta.txt'))
+    metas = sorted(glob.glob(path_in + '/*_meta.txt')))
     train_sets = []
     celltypes = []
     platforms = []
-    genes = []
     print('Loading data')
     for i in range(len(samples)):
         train_sets.append(read_expr(samples[i]))
-        genes.append(train_sets[i].index.to_list())
         meta = pd.read_csv(metas[i], sep='\t', header=0)
-        celltypes = celltypes + meta['Celltype'].to_list()
-        platforms = platforms + meta['Platform'].to_list()
-    genes = reduce(np.intersect1d, genes)
+        celltype = meta['Celltype'].to_list()
+        platform = meta['Platform'].to_list()
+        celltypes.append(celltype)
+        platforms.append(platform)
+    ct_freqs = Counter([i for item in celltypes for i in item])
+    max_n = max(ct_freqs.values())
+    rct_freqs = {}
+    if  max_n < 500:
+        sample_n = 100
+    elif max_n < 1000:
+        sample_n = 500
+    else:
+        sample_n = 1000
+    for ct,freq in ct_freqs.items():
+        if freq <= sample_n:
+            rct_freqs[ct] = freq
+                
     for i in range(len(samples)):
-        train_sets[i] = train_sets[i].loc[genes, ]
+        sample_ct_freq = {}
+        ct_freq = Counter(celltypes[i])
+        if len(ct_freq)>1:
+            for ct,freq in rct_freqs.items():
+                if (ct in ct_freq.keys()) & (ct_freq[ct] >= 6):
+                    sample_ct_freq[ct] = round(sample_n * ct_freq[ct]/freq)
+            smo = SMOTE(sampling_strategy = sample_ct_freq,random_state=1)
+            train_sets[i],celltypes[i] = smo.fit_resample(train_sets[i].T,celltypes[i])
+            train_sets[i] = train_sets[i].T         
+            platforms[i] = np.unique(platforms[i]).tolist() * train_sets[i].shape[1]
+    platforms = [i for item in platforms for i in item]
+    celltypes = [i for item in celltypes for i in item]
+    for i in range(len(samples)):
         train_sets[i] = np.divide(train_sets[i], np.sum(train_sets[i],
                                                         axis=0)) * 10000
         train_sets[i] = np.log2(train_sets[i] + 1)
     train_data = pd.concat(train_sets, axis=1)
-    return train_data, celltypes, platforms, genes
+    return train_data, celltypes, platforms
+
+# def preprocessing(path_in):
+#     samples = sorted(glob.glob(path_in + '/*_expr.txt'))
+#     metas = sorted(glob.glob(path_in + '/*_meta.txt'))
+#     train_sets = []
+#     celltypes = []
+#     platforms = []
+#     genes = []
+#     print('Loading data')
+#     for i in range(len(samples)):
+#         train_sets.append(read_expr(samples[i]))
+#         genes.append(train_sets[i].index.to_list())
+#         meta = pd.read_csv(metas[i], sep='\t', header=0)
+#         celltypes = celltypes + meta['Celltype'].to_list()
+#         platforms = platforms + meta['Platform'].to_list()
+#     genes = reduce(np.intersect1d, genes)
+#     for i in range(len(samples)):
+#         train_sets[i] = train_sets[i].loc[genes, ]
+#         train_sets[i] = np.divide(train_sets[i], np.sum(train_sets[i],
+#                                                         axis=0)) * 10000
+#         train_sets[i] = np.log2(train_sets[i] + 1)
+#     train_data = pd.concat(train_sets, axis=1)
+#     return train_data, celltypes, platforms, genes
 
 
 class Datasets(Dataset):

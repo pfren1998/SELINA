@@ -186,7 +186,6 @@ def test(test_df, network, ct_dic):
             expr = expr.float()
             expr = expr.to(device)
             class_output = network(expr)
-            class_output
             pred_labels.append(
                 class_output.argmax(dim=1).cpu().numpy().tolist())
             pred_prob.append(class_output.cpu().numpy())
@@ -210,7 +209,6 @@ def query_predict(input, model, path_out, outprefix):
     query_expr = merge(genes, query_expr)
     nfeatures, nct = len(genes), len(ct_dic)
     network = torch.load(model)
-    network.train()
     network = Autoencoder(network, nfeatures, nct)
     print('Fine-tuning1')
     network = tune1(query_expr, network, params_tune1)
