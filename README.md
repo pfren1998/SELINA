@@ -6,7 +6,7 @@ Selina is a deep-learning based framework for single cell assignment with multip
 
 ## Workflow
 
-![image](https://github.com/pfren1998/SELINA/blob/main/docs/source/_images/Algorithm.png)
+![image](https://github.com/pfren1998/SELINA/blob/main/docs/source/_images/workflow.png)
 
 ## Install
 
