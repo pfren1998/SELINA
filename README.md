@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Selina is a deep-learning based framework for single cell assignment with multiple references. The algorithm consists of three main steps: pre-training, fine-tuning and predicting. The reference datasets were first trained on MADA, a supervised deep learning framework, to obtain a pre-trained model. An autoencoder was then used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference datasets were transferred to the query dataset based on the fully trained model. Along with the annotation algorithm, we also collected xx datasets which were uniformly processed and curated to provide users with comprehensive pre-trained models
+Selina is a deep-learning based framework for single cell assignment with multiple references. The algorithm consists of three main steps: cell type balancing, pre-training and fine-tuning. The rare cell types in reference datasets are first oversampled using SMOTE(Synthetic Minority Oversampling Technique), and then trained with MADA(Multi-Adversarial Domain Adaptation), a supervised deep learning framework, to obtain a pre-trained model. An autoencoder is subsquently used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference datasets are transferred to the query dataset based on the fully-trained model. Along with the annotation algorithm, we also collect 137 datasets which were uniformly processed and curated to provide users with comprehensive pre-trained models.
 
 ## Workflow
 
