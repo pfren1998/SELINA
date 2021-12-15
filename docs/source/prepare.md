@@ -2,7 +2,7 @@
 
 ## Install
 
-To use Selina, you should first build a conda environment
+To use SELINA, you should first build a conda environment
 
 ```
 conda create -n Selina
@@ -19,8 +19,8 @@ conda install -c pfren selina
 
 ### Preprocess of training data
 
-Before you start to transfer labels to your query data, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference datasets, you should have 2 paired files, one is named as xx_expr.txt, this file contains the expression profiles, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell.
-For the meta file, the first column is celltype of each cell, and the second column is platform of each cell. Note that if you choose to use our pre-tarined models, this step can be passed.
+Before you start to run SELINA, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference datasets, you should have 2 paired files, one is named as xx_expr.txt, this file contains the gene expression, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell.
+For the meta file, the first column is celltype of each cell, and the second column is platform of each cell. Note that if you choose to use our pretarined models, this step can be skipped.
 
 ```
 reference/
@@ -42,7 +42,7 @@ reference/
 
 ### Preprocess of query data
 
-In addition to the training data, you also need to preprocess the query data. This step is to fit your data to our pre-trained models. Make the gene match and do some normalization. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format means the the expression file is a matrix where each row is a gene and each column is a cell. The full list of preprocessing commands is shown as below:
+In addition to the training data, you also need to preprocess the query data. This step is to normalize your data and match the genes with the pretrained model. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
 
 ```
 usage: selina preprocess [-h] [--format {h5,mtx,plain}] [--matrix MATRIX]
@@ -110,7 +110,7 @@ Output arguments:
                         profiles
 ```
 
-Note that you must choose the mode for the returned expression profiles. This step will generate two output files:
+Note that you must choose the mode for the returned expression profiles. In this step two output files will be generated:
 
 - `query_res.rds`: a rds file which stores a seurat object
 - `query_{single/cluster}_expr.txt`: input of the prediction step

@@ -15,14 +15,14 @@ optional arguments:
   --outprefix OUTPREFIX Prefix of the output files. DEFAULT: pre-trained
 ```
 
-In this step, two output files that will be used in the next step will be generated
+In this step, two output files used in the next step will be generated
 
 - `pre-trained_params.pt`: a file containing all parameters of the trained model
 - `pre-trained_meta.pkl`: a files containing the cell types of the reference data
 
 ## Predict
 
-Here you can choose to use our pre-trained model or the model trained by yourself
+Here you can choose to use our pre-trained model or the model trained by yourself to annotate the query data
 
 ```
 usage: selina predict [-h] --mode {single,cluster} --input INPUT --model MODEL
@@ -48,6 +48,6 @@ Arguments for plot:
 
 This step will output three files:
 
-- `query_predictions.txt`: predicted cell types for each cell in the query data(default choose the celltype corresponding to the max probablity as the prediction results)
+- `query_predictions.txt`: predicted cell types for each cell in the query data(default choose the cell type corresponding to the max probablity as the prediction results)
 - `query_probability.txt`: probablity of cells predicted as each of the reference cell types
 - `query_pred.png`: a umap png file with cell type annotation on it
