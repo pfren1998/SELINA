@@ -42,7 +42,7 @@ selina predict --mode single --input query_single_expr.txt --model pre-trained_p
 
 Running this command will output three files:
 
-- `query_predictions.txt`: predicted cell types for each cell in the query data(default choose the cell type corresponding to the max probablity as the prediction results)
+- `query_predictions.txt`: predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
 
 - `query_probability.txt`: probablity of cells predicted as each of the reference cell types
 

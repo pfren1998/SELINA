@@ -48,6 +48,6 @@ Arguments for plot:
 
 This step will output three files:
 
-- `query_predictions.txt`: predicted cell types for each cell in the query data(default choose the cell type corresponding to the max probablity as the prediction results)
+- `query_predictions.txt`: predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
 - `query_probability.txt`: probablity of cells predicted as each of the reference cell types
 - `query_pred.png`: a umap png file with cell type annotation on it
