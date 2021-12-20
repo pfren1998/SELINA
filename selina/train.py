@@ -54,12 +54,13 @@ def label2dic(label):
     return dic
 
 
-def preprocessing_sample(path_in):
+def preprocessing(path_in):
     samples = sorted(glob.glob(path_in + '/*_expr.txt'))
-    metas = sorted(glob.glob(path_in + '/*_meta.txt')))
+    metas = sorted(glob.glob(path_in + '/*_meta.txt'))
     train_sets = []
     celltypes = []
     platforms = []
+    genes = []
     print('Loading data')
     for i in range(len(samples)):
         train_sets.append(read_expr(samples[i]))
@@ -68,6 +69,8 @@ def preprocessing_sample(path_in):
         platform = meta['Platform'].to_list()
         celltypes.append(celltype)
         platforms.append(platform)
+        genes.append(train_sets[i].index.to_list())
+    genes = reduce(np.intersect1d, genes)
     ct_freqs = Counter([i for item in celltypes for i in item])
     max_n = max(ct_freqs.values())
     rct_freqs = {}
@@ -95,11 +98,12 @@ def preprocessing_sample(path_in):
     platforms = [i for item in platforms for i in item]
     celltypes = [i for item in celltypes for i in item]
     for i in range(len(samples)):
+        train_sets[i] = train_sets[i].loc[genes, ]
         train_sets[i] = np.divide(train_sets[i], np.sum(train_sets[i],
                                                         axis=0)) * 10000
         train_sets[i] = np.log2(train_sets[i] + 1)
     train_data = pd.concat(train_sets, axis=1)
-    return train_data, celltypes, platforms
+    return train_data, celltypes, platforms, genes
 
 # def preprocessing(path_in):
 #     samples = sorted(glob.glob(path_in + '/*_expr.txt'))
