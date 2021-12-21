@@ -22,7 +22,7 @@ In this step, two output files used in the next step will be generated
 
 ## Predict
 
-Here you can choose to use our pre-trained model or the model trained by yourself to annotate the query data
+Here you can choose to use our pre-trained model (available on https://github.com/pfren1998/SELINA_reference) or the model trained by yourself to annotate the query data
 
 ```
 usage: selina predict [-h] --mode {single,cluster} --input INPUT --model MODEL

@@ -34,7 +34,7 @@ Running this command will generate two output files:
 
 ### Predict
 
-Here you can use our pretrained model to predict for your query data
+Here you can use our pretrained model (available on https://github.com/pfren1998/SELINA_reference) to predict for your query data
 
 ```
 selina predict --mode single --input query_single_expr.txt --model pre-trained_params.pt --outprefix query --plot True query_res.rds
