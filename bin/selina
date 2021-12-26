@@ -1,6 +1,6 @@
 #!/usr/bin/env/ python3
 import argparse as ap
-from selina.train import train_parser, train_model
+from selina.train import train_parser, train_model, GRL, MADA
 from selina.preprocess.python.scRNA_pipeline import preprocess_parser, query_preprocess
 from selina.predict.predict import predict_parser, query_predict, query_plot
 import os
