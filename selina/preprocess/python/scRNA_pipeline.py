@@ -123,7 +123,7 @@ def preprocess_parser(subparsers):
         dest="directory",
         default="preoprocess",
         help=
-        "Path to the directory where the result file shall be stored. DEFAULT: preoprocess."
+        "Path to the directory where the result file shall be stored. DEFAULT: preprocess."
     )
     group_output.add_argument("--outprefix",
                               dest="outprefix",

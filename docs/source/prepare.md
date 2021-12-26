@@ -100,7 +100,7 @@ Quality control arguments:
 Output arguments:
   --directory DIRECTORY
                         Path to the directory where the result file shall be
-                        stored. DEFAULT: preoprocess.
+                        stored. DEFAULT: preprocess.
   --outprefix OUTPREFIX
                         Prefix of output files. DEFAULT: query.
   --mode {single,cluster,both}
