@@ -208,7 +208,7 @@ def query_predict(input, model, path_out, outprefix):
     genes, ct_dic = meta['genes'], meta['celltypes']
     query_expr = merge(genes, query_expr)
     nfeatures, nct = len(genes), len(ct_dic)
-    network = torch.load(model)
+    network = torch.load(model, map_location = device)
     network = Autoencoder(network, nfeatures, nct)
     print('Fine-tuning1')
     network = tune1(query_expr, network, params_tune1)
