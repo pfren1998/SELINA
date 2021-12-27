@@ -228,6 +228,6 @@ def query_predict(input, model, path_out, outprefix):
 
 def query_plot(rds,path_out,outprefix,mode):
     print('Plotting')
-    cmd = 'Rscript ' + os.path.split(os.path.abspath(__file__))[0] + '/plot.R ' + ' --rds ' + rds + ' --celltype ' + path_out + outprefix + '_predictions.txt' + ' --path_out ' + path_out + ' --mode ' + mode
+    cmd = 'Rscript ' + os.path.split(os.path.abspath(__file__))[0] + '/plot.R ' + ' --rds ' + rds + ' --celltype ' + path_out + '/' + outprefix + '_predictions.txt' + ' --path_out ' + path_out + ' --mode ' + mode
     os.system(cmd)
     print('Finish plotting')
