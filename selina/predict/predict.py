@@ -216,11 +216,11 @@ def query_predict(input, model, path_out, outprefix):
     network = tune2(query_expr, network, params_tune2)
     network = Classifier(network).to(device)
     pred_labels, pred_prob = test(query_expr, network, ct_dic)
-    pd.DataFrame(pred_labels).to_csv(path_out + outprefix + '_predictions.txt',
+    pd.DataFrame(pred_labels).to_csv(path_out + '/' + outprefix + '_predictions.txt',
                                      index=False,
                                      header=True,
                                      sep='\t')
-    pd.DataFrame(pred_prob).to_csv(path_out + outprefix + '_probability.txt',
+    pd.DataFrame(pred_prob).to_csv(path_out + '/' + outprefix + '_probability.txt',
                                    index=True,
                                    header=True,
                                    sep='\t')
