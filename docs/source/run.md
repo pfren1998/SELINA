@@ -1,4 +1,4 @@
-# Run Selina
+# Run SELINA
 
 ## Train
 
@@ -18,11 +18,11 @@ optional arguments:
 In this step, two output files used in the next step will be generated
 
 - `pre-trained_params.pt`: a file containing all parameters of the trained model
-- `pre-trained_meta.pkl`: a files containing the cell types of the reference data
+- `pre-trained_meta.pkl`: a file containing the cell types and genes of the reference data
 
 ## Predict
 
-Here you can choose to use our pre-trained model (available on https://github.com/pfren1998/SELINA_reference) or the model trained by yourself to annotate the query data
+Here you can choose to use our pre-trained models (available on https://github.com/pfren1998/SELINA_reference) or the model trained by yourself to annotate the query data
 
 ```
 usage: selina predict [-h] --mode {single,cluster} --input INPUT --model MODEL

@@ -1,7 +1,8 @@
 # Prepare
 
-## Install
+## Installation
 
+SELINA is supported for macOS, Linux and Windows
 To use SELINA, you should first build a conda environment
 
 ```
@@ -9,10 +10,10 @@ conda create -n Selina
 conda activate Selina
 ```
 
-Then you can install Selina using the following command
+Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously)
 
 ```
-conda install -c pfren selina
+conda install -c pfren selina -c conda-forge -c r
 ```
 
 ## Prepare data
@@ -113,4 +114,4 @@ Output arguments:
 Note that you must choose the mode for the returned expression profiles. In this step two output files will be generated:
 
 - `query_res.rds`: a rds file which stores a seurat object
-- `query_{single/cluster}_expr.txt`: input of the prediction step
+- `query_{single/cluster}_expr.txt`: expression matrix of query data for the prediction step
