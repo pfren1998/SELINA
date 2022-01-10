@@ -51,6 +51,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="run.html">Run SELINA</a></li>
 </ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
+</ul>
 
         </div>
       </div>
@@ -80,17 +83,17 @@
 <h1>Prepare<a class="headerlink" href="#prepare" title="Permalink to this headline"></a></h1>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline"></a></h2>
-<p>SELINA is supported for macOS, Linux and Windows
-To use SELINA, you should first build a conda environment</p>
+<p>SELINA is supported for macOS, Linux and Windows.
+To use SELINA, you should first build a conda environment.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">Selina</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">Selina</span>
 </pre></div>
 </div>
-<p>Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously)</p>
+<p>Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously).</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">pfren</span> <span class="n">selina</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="o">-</span><span class="n">c</span> <span class="n">r</span>
 </pre></div>
 </div>
-<p>Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed</p>
+<p>Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">pytorch</span> <span class="n">cudatoolkit</span>
 </pre></div>
 </div>
@@ -148,7 +151,7 @@ For the meta file, the first column is celltype of each cell, and the second col
 </table></section>
 <section id="preprocess-of-query-data">
 <h3>Preprocess of query data<a class="headerlink" href="#preprocess-of-query-data" title="Permalink to this headline"></a></h3>
-<p>In addition to the training data, you also need to preprocess the query data. This step is to normalize your data and match the genes with the pretrained model. We support 3 formats of input: <code class="docutils literal notranslate"><span class="pre">plain</span></code>,<code class="docutils literal notranslate"><span class="pre">h5</span></code> and <code class="docutils literal notranslate"><span class="pre">mtx</span></code>. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:</p>
+<p>In addition to the training data, you also need to preprocess the query data. This step is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: <code class="docutils literal notranslate"><span class="pre">plain</span></code>,<code class="docutils literal notranslate"><span class="pre">h5</span></code> and <code class="docutils literal notranslate"><span class="pre">mtx</span></code>. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">selina</span> <span class="n">preprocess</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">format</span> <span class="p">{</span><span class="n">h5</span><span class="p">,</span><span class="n">mtx</span><span class="p">,</span><span class="n">plain</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">matrix</span> <span class="n">MATRIX</span><span class="p">]</span>
                           <span class="p">[</span><span class="o">--</span><span class="n">separator</span> <span class="p">{</span><span class="n">tab</span><span class="p">,</span><span class="n">space</span><span class="p">,</span><span class="n">comma</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">feature</span> <span class="n">FEATURE</span><span class="p">]</span>
                           <span class="p">[</span><span class="o">--</span><span class="n">gene</span><span class="o">-</span><span class="n">column</span> <span class="n">GENE_COLUMN</span><span class="p">]</span>
@@ -216,8 +219,8 @@ For the meta file, the first column is celltype of each cell, and the second col
 </div>
 <p>Note that you must choose the mode for the returned expression profiles. In this step two output files will be generated:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">query_res.rds</span></code>: a rds file which stores a seurat object</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">query_{single/cluster}_expr.txt</span></code>: expression matrix of query data for the prediction step</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query_res.rds</span></code> : a seurat object with gene expression profile and dimension reduction result</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query_{single/cluster}_expr.txt</span></code> : expression matrix of query data for the prediction step</p></li>
 </ul>
 </section>
 </section>

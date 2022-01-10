@@ -15,14 +15,14 @@ optional arguments:
   --outprefix OUTPREFIX Prefix of the output files. DEFAULT: pre-trained
 ```
 
-In this step, two output files used in the next step will be generated
+In this step, two output files used in the next step will be generated.
 
-- `pre-trained_params.pt`: a file containing all parameters of the trained model
-- `pre-trained_meta.pkl`: a file containing the cell types and genes of the reference data
+- `pre-trained_params.pt` : a file containing all parameters of the trained model
+- `pre-trained_meta.pkl` : a file containing the cell types and genes of the reference data
 
 ## Predict
 
-Here you can choose to use our pre-trained models (available on [SELINA models](https://github.com/wanglabtongji/SELINA_reference)) or the model trained by yourself to annotate the query data
+Here you can choose to use our pre-trained models (available on [SELINA models](https://github.com/wanglabtongji/SELINA_reference)) or the model trained by yourself to annotate the query data.
 
 ```
 usage: selina predict [-h] --mode {single,cluster} --input INPUT --model MODEL
@@ -48,6 +48,6 @@ Arguments for plot:
 
 This step will output three files:
 
-- `query_predictions.txt`: predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
-- `query_probability.txt`: probablity of cells predicted as each of the reference cell types
-- `query_pred.png`: a umap png file with cell type annotation on it
+- `query_predictions.txt` : predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
+- `query_probability.txt` : probablity of cells predicted as each of the reference cell types
+- `query_pred.png` : a umap png file with cell type annotation on it

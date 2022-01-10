@@ -4,7 +4,7 @@ This is an example to show you how to run selina step by step.
 
 ## 1. Data
 
-The data used in this vignette are orgnized as the directory tree shows.
+The data used in this vignette are orgnized as the following directory tree shows.
 
 ```
 ├── query_data
@@ -25,7 +25,7 @@ The data used in this vignette are orgnized as the directory tree shows.
 └── res
 ```
 
-The query data used here is from [mTORC1 activation in lung mesenchyme drives sex- and age-dependent pulmonary structure and function decline](https://www.nature.com/articles/s41467-020-18979-4). The reference data are listed in the table.
+The query data used here is from [mTORC1 activation in lung mesenchyme drives sex- and age-dependent pulmonary structure and function decline](https://www.nature.com/articles/s41467-020-18979-4). The citation papers of the reference data are listed in the following table.
 
 |          Dataset           |                                                                                                        Study                                                                                                        |
 | :------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
@@ -36,9 +36,11 @@ The query data used here is from [mTORC1 activation in lung mesenchyme drives se
 | GSE134355_Lung-Adult_9113  |                                                  [Construction of a human cell landscape at single-cell level](https://www.nature.com/articles/s41586-020-2157-4)                                                   |
 | GSE146981_Lung-Adult_27015 | [Senescence of Alveolar Type 2 Cells Drives Progressive Pulmonary Fibrosis](https://www.atsjournals.org/doi/10.1164/rccm.202004-1274OC?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed) |
 
-Take the GSE123405_Lung-Adult_7786 as an example to show the content.
+Specifically, the reference datasets are stored in the reference_data folder, and for each dataset there are two corresponding files used in the pre-training stage; one with `expr` provides the expression profile of each dataset, and the file with `meta` presents the cell type and sequencing platform of each cell. Here we take GSE123405_Lung-Adult_7786 as an example to show you the detail information.
 
-`GSE123405_Lung-Adult_7786_expr.txt`
+```
+GSE123405_Lung-Adult_7786_expr.txt
+```
 
 ```
 Gene GSM3502715@GTTAGCTTAATT GSM3502715@TCCCCTCTTCGC GSM3502715@TATTGTTTTACN GSM3502715@GACTTATTTATA
@@ -49,7 +51,9 @@ AACS 0 2 0 0
 AADAC 0 0 0 0
 ```
 
-`GSE123405_Lung-Adult_7786_meta.txt`
+```
+GSE123405_Lung-Adult_7786_meta.txt
+```
 
 ```
 Celltype Platform
@@ -59,7 +63,9 @@ Club Drop-seq
 Ciliated Drop-seq
 ```
 
-## 2. preprocess of query data
+## 2. Preprocess of query data
+
+The following command is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix.
 
 ```
 selina preprocess --format h5  --matrix query_data/GSE139534_Lung-Adult_10462_gene_count.h5 --gene-idtype symbol --assembly GRCh38 --count-cutoff 1000 --gene-cutoff 500 --cell-cutoff 10 --directory res --outprefix query --mode single
@@ -156,24 +162,32 @@ Number of communities: 24
 Elapsed time: 1 seconds
 ```
 
+This step will output two files in the res folder.
+
+- `1. query_res.rds` : a seurat object with gene expression profile and dimension reduction result
+
 ```
 An object of class Seurat
 17547 features across 10453 samples within 1 assay
 Active assay: RNA (17547 features, 2000 variable features)
- 2 dimensional reductions calculated: pca, umap
+2 dimensional reductions calculated: pca, umap
 ```
 
+- `2. query_single_expr.txt` : expression matrix of query data for the prediction step
+
 ```
-Gene	GSM4143262@AAACCTGCATCAGTCA-1	GSM4143262@AAACCTGTCGGGAGTA-1	GSM4143262@AAAGTAGTCGGAATCT-1	GSM4143262@AACCATGCACGACGAA-1
-<chr>	<dbl>	<dbl>	<dbl>	<dbl>
-AL669831.5	0	0	0	0
-FAM87B 	0	0	0	0
-LINC00115 	0	0	0	0
-FAM41C 	0	0	0	0
-AL645608.1	0	0	0	0
+Gene GSM4143262@AAACCTGCATCAGTCA-1 GSM4143262@AAACCTGTCGGGAGTA-1 GSM4143262@AAAGTAGTCGGAATCT-1 GSM4143262@AACCATGCACGACGAA-1
+<chr> <dbl> <dbl> <dbl> <dbl>
+AL669831.5 0 0 0 0
+FAM87B 0 0 0 0
+LINC00115 0 0 0 0
+FAM41C 0 0 0 0
+AL645608.1 0 0 0 0
 ```
 
-## 3. Training
+## 3. Train
+
+This step is to train a model using the reference data listed above.
 
 ```
 selina train --path_in reference_data --path_out res --outprefix pre-trained
@@ -193,9 +207,15 @@ Finish Training
 All done
 ```
 
+In this step, two output files used in the next step will be generated.
+
+- `1. pre-trained_params.pt` : a file containing all parameters of the trained model
+
+- `2. pre-trained_meta.pkl` : a file containing the cell types and genes of the reference data
+
 ```
 with open('res/pre-trained_meta.pkl','rb') as f:
-    meta = pickle.load(f)
+meta = pickle.load(f)
 meta['genes'][1:5]
 array(['A4GALT', 'AAAS', 'AACS', 'AADAC'], dtype='<U12')
 
@@ -203,7 +223,9 @@ meta['celltypes'].keys()
 dict_keys(['Mucous', 'CD8T', 'Fibroblast', 'Macrophage', 'Chondrocyte', 'DC', 'AT2', 'Endothelial_lv3', 'NK', 'Neutrophil', 'Alveolar Bipotent', 'AT1', 'Lymphatic Endothelial', 'Muscle', 'Mast', 'Secretory Epithelial', 'Club', 'Basal', 'Alveolar Bipotent Progenitor', 'Goblet', 'CD4T', 'Megakaryocyte', 'Intermediate(Club-Basal)', 'Ionocyte', 'B', 'Neuroendocrine', 'Ciliated', 'Monocyte'])
 ```
 
-## 4. predicting
+## 4. Predict
+
+Here you can choose to use our pretrained models (available on [SELINA models](https://github.com/wanglabtongji/SELINA_reference)) or the model trained by yourself to annotate the query data.
 
 ```
 selina predict --mode single --input res/query_single_expr.txt --model res/pre-trained_params.pt --path_out res --outprefix query --plot True --rds res/query_res.rds
@@ -213,34 +235,41 @@ selina predict --mode single --input res/query_single_expr.txt --model res/pre-t
 Loading data
 100% |██████████████████████████████████████████████████| Reading data [done]
 Fine-tuning1
-100%|████████████████████████████████████████████████████████████████████████| 50/50 [01:26<00:00,  1.73s/it]
+100%|████████████████████████████████████████████████████████████████████████| 50/50 [01:26<00:00, 1.73s/it]
 Finish Tuning1
 Fine-tuning2
-100%|████████████████████████████████████████████████████████████████████████| 10/10 [00:24<00:00,  2.49s/it]
+100%|████████████████████████████████████████████████████████████████████████| 10/10 [00:24<00:00, 2.49s/it]
 Finish Tuning2
 Finish Prediction
 Plotting
 Finish plotting
 ```
 
-```
-Cell	Prediction
-<chr>	<chr>
-GSM4143262@AAACCTGCATCAGTCA-1	AT1
-GSM4143262@AAACCTGTCGGGAGTA-1	AT1
-GSM4143262@AAAGTAGTCGGAATCT-1	AT1
-GSM4143262@AACCATGCACGACGAA-1	AT1
-GSM4143262@AACGTTGAGGCGCTCT-1	AT1
-```
+This step will output three files:
+
+- `1. query_predictions.txt` : predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
+  reference cell types
 
 ```
-Mucous	CD8T	Fibroblast	Macrophage
-<chr>	<dbl>	<dbl>	<dbl>	<dbl>
-GSM4143262@AAACCTGCATCAGTCA-1	9.528222e-13	3.493414e-26	8.598993e-16	2.151410e-10
-GSM4143262@AAACCTGTCGGGAGTA-1	6.421099e-15	1.029570e-29	4.329293e-17	4.808651e-14
-GSM4143262@AAAGTAGTCGGAATCT-1	2.036562e-18	2.974594e-34	3.507774e-21	3.168965e-19
-GSM4143262@AACCATGCACGACGAA-1	6.580991e-16	4.516618e-29	9.358461e-18	5.502941e-14
-GSM4143262@AACGTTGAGGCGCTCT-1	2.829751e-13	5.663002e-25	3.487227e-16	1.142975e-12
+Cell Prediction
+GSM4143262@AAACCTGCATCAGTCA-1 AT1
+GSM4143262@AAACCTGTCGGGAGTA-1 AT1
+GSM4143262@AAAGTAGTCGGAATCT-1 AT1
+GSM4143262@AACCATGCACGACGAA-1 AT1
+GSM4143262@AACGTTGAGGCGCTCT-1 AT1
 ```
 
-![image]('https://github.com/pfren1998/SELINA/tree/main/docs/source/_images/query_cluster.png')
+- `2. query_probability.txt` : probablity of cells predicted as each of the
+
+```
+Mucous CD8T Fibroblast Macrophage
+GSM4143262@AAACCTGCATCAGTCA-1 9.528222e-13 3.493414e-26 8.598993e-16 2.151410e-10
+GSM4143262@AAACCTGTCGGGAGTA-1 6.421099e-15 1.029570e-29 4.329293e-17 4.808651e-14
+GSM4143262@AAAGTAGTCGGAATCT-1 2.036562e-18 2.974594e-34 3.507774e-21 3.168965e-19
+GSM4143262@AACCATGCACGACGAA-1 6.580991e-16 4.516618e-29 9.358461e-18 5.502941e-14
+GSM4143262@AACGTTGAGGCGCTCT-1 2.829751e-13 5.663002e-25 3.487227e-16 1.142975e-12
+```
+
+- `3. query_pred.png` : a umap png file with cell type annotation on it
+
+![image](./_images/query_pred.png)

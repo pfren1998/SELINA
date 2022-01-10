@@ -2,21 +2,21 @@
 
 ## Installation
 
-SELINA is supported for macOS, Linux and Windows
-To use SELINA, you should first build a conda environment
+SELINA is supported for macOS, Linux and Windows.
+To use SELINA, you should first build a conda environment.
 
 ```
 conda create -n Selina
 conda activate Selina
 ```
 
-Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously)
+Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously).
 
 ```
 conda install -c pfren selina -c conda-forge -c r
 ```
 
-Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed
+Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed.
 
 ```
 conda install pytorch cudatoolkit
@@ -49,7 +49,7 @@ reference/
 
 ### Preprocess of query data
 
-In addition to the training data, you also need to preprocess the query data. This step is to normalize your data and match the genes with the pretrained model. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
+In addition to the training data, you also need to preprocess the query data. This step is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
 
 ```
 usage: selina preprocess [-h] [--format {h5,mtx,plain}] [--matrix MATRIX]
@@ -119,5 +119,5 @@ Output arguments:
 
 Note that you must choose the mode for the returned expression profiles. In this step two output files will be generated:
 
-- `query_res.rds`: a rds file which stores a seurat object
-- `query_{single/cluster}_expr.txt`: expression matrix of query data for the prediction step
+- `query_res.rds` : a seurat object with gene expression profile and dimension reduction result
+- `query_{single/cluster}_expr.txt` : expression matrix of query data for the prediction step
