@@ -248,7 +248,6 @@ Finish plotting
 This step will output three files:
 
 - `1. query_predictions.txt` : predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)
-  reference cell types
 
 ```
 Cell Prediction
@@ -259,7 +258,7 @@ GSM4143262@AACCATGCACGACGAA-1 AT1
 GSM4143262@AACGTTGAGGCGCTCT-1 AT1
 ```
 
-- `2. query_probability.txt` : probablity of cells predicted as each of the
+- `2. query_probability.txt` : probablity of cells predicted as each of the reference cell types
 
 ```
 Mucous CD8T Fibroblast Macrophage
