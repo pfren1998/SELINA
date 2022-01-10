@@ -43,6 +43,7 @@ def read_expr(path):
     expr = expr.to_pandas()
     expr.index = expr.loc[:, 'Gene']
     del expr['Gene']
+    expr = expr.astype(float)
     return expr
 
 

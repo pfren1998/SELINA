@@ -34,6 +34,12 @@ conda activate Selina
 conda install -c pfren selina -c conda-forge -c r
 ```
 
+Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed
+
+```
+conda install pytorch cudatoolkit
+```
+
 ## Tutorial
 
 The example data are stored in the demos folder.

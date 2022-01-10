@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Run Selina &mdash; Selina v1 documentation</title>
+  <title>Run SELINA &mdash; Selina v1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -40,7 +40,7 @@
 <li class="toctree-l1"><a class="reference internal" href="prepare.html">Prepare</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Run Selina</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Run SELINA</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#train">Train</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#predict">Predict</a></li>
 </ul>
@@ -61,7 +61,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Run Selina</li>
+      <li>Run SELINA</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/run.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -72,11 +72,11 @@
            <div itemprop="articleBody">
              
   <section id="run-selina">
-<h1>Run Selina<a class="headerlink" href="#run-selina" title="Permalink to this headline"></a></h1>
+<h1>Run SELINA<a class="headerlink" href="#run-selina" title="Permalink to this headline"></a></h1>
 <section id="train">
 <h2>Train<a class="headerlink" href="#train" title="Permalink to this headline"></a></h2>
 <p>If you want to train a model with your own reference files, you can use the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">train</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">path_in</span> <span class="n">PATH_IN</span> <span class="o">--</span><span class="n">path_out</span> <span class="n">PATH_OUT</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">selina</span> <span class="n">train</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">path_in</span> <span class="n">PATH_IN</span> <span class="o">--</span><span class="n">path_out</span> <span class="n">PATH_OUT</span>
                      <span class="p">[</span><span class="o">--</span><span class="n">outprefix</span> <span class="n">OUTPREFIX</span><span class="p">]</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
@@ -86,15 +86,15 @@
   <span class="o">--</span><span class="n">outprefix</span> <span class="n">OUTPREFIX</span> <span class="n">Prefix</span> <span class="n">of</span> <span class="n">the</span> <span class="n">output</span> <span class="n">files</span><span class="o">.</span> <span class="n">DEFAULT</span><span class="p">:</span> <span class="n">pre</span><span class="o">-</span><span class="n">trained</span>
 </pre></div>
 </div>
-<p>In this step, two output files that will be used in the next step will be generated</p>
+<p>In this step, two output files used in the next step will be generated</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">pre-trained_meta.pkl</span></code> : a file containing all parameters of the trained model</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pre-trained_params.pt</span></code>: a files containing the cell types of the reference data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pre-trained_params.pt</span></code>: a file containing all parameters of the trained model</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pre-trained_meta.pkl</span></code>: a file containing the cell types and genes of the reference data</p></li>
 </ul>
 </section>
 <section id="predict">
 <h2>Predict<a class="headerlink" href="#predict" title="Permalink to this headline"></a></h2>
-<p>Here you can choose to use our pre-trained model or the model trained by yourself</p>
+<p>Here you can choose to use our pre-trained models (available on https://github.com/wanglabtongji/SELINA_reference) or the model trained by yourself to annotate the query data</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">selina</span> <span class="n">predict</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">mode</span> <span class="p">{</span><span class="n">single</span><span class="p">,</span><span class="n">cluster</span><span class="p">}</span> <span class="o">--</span><span class="nb">input</span> <span class="n">INPUT</span> <span class="o">--</span><span class="n">model</span> <span class="n">MODEL</span>
                        <span class="o">--</span><span class="n">path_out</span> <span class="n">PATH_OUT</span> <span class="p">[</span><span class="o">--</span><span class="n">outprefix</span> <span class="n">OUTPREFIX</span><span class="p">]</span> <span class="o">--</span><span class="n">plot</span>
                        <span class="p">{</span><span class="kc">True</span><span class="p">,</span><span class="kc">False</span><span class="p">}</span> <span class="p">[</span><span class="o">--</span><span class="n">rds</span> <span class="n">RDS</span><span class="p">]</span>
@@ -118,7 +118,7 @@
 </div>
 <p>This step will output three files:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">query_predictions.txt</span></code>: predicted cell types for each cell in the query data(default choose the celltype corresponding to the max probablity as the prediction results)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">query_predictions.txt</span></code>: predicted cell type for each cell in the query data(choose the cell type corresponding to the max probablity as the default prediction results)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">query_probability.txt</span></code>: probablity of cells predicted as each of the reference cell types</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">query_pred.png</span></code>: a umap png file with cell type annotation on it</p></li>
 </ul>

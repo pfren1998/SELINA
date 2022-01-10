@@ -16,6 +16,12 @@ Then you can install SELINA using the following command(All the dependency packa
 conda install -c pfren selina -c conda-forge -c r
 ```
 
+Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed
+
+```
+conda install pytorch cudatoolkit
+```
+
 ## Prepare data
 
 ### Preprocess of training data

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Selina’s documentation &mdash; Selina v1 documentation</title>
+  <title>SELINA’s documentation &mdash; Selina v1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -40,7 +40,7 @@
 <li class="toctree-l1"><a class="reference internal" href="prepare.html">Prepare</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="run.html">Run Selina</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run SELINA</a></li>
 </ul>
 
         </div>
@@ -57,7 +57,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>Selina’s documentation</li>
+      <li>SELINA’s documentation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -68,16 +68,16 @@
            <div itemprop="articleBody">
              
   <section id="selina-s-documentation">
-<h1>Selina’s documentation<a class="headerlink" href="#selina-s-documentation" title="Permalink to this headline"></a></h1>
-<p>Selina is a deep-learning based framework for single cell assignment with multiple references. The algorithm consists of three main steps: pre-training, fine-tuning and predicting. The reference datasets were first trained on MADA, a supervised deep learning framework, to obtain a pre-trained model. An autoencoder was then used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference datasets were transferred to the query dataset based on the fully trained model. Along with the annotation algorithm, we also collected xx datasets which were uniformly processed and curated to provide users with comprehensive pre-trained models.</p>
-<a class="reference internal image-reference" href="_images/algorithm.png"><img alt="_images/algorithm.png" src="_images/algorithm.png" style="width: 1600px;" /></a>
+<h1>SELINA’s documentation<a class="headerlink" href="#selina-s-documentation" title="Permalink to this headline"></a></h1>
+<p>SELINA is a deep learning-based framework for single cell assignment with multiple references. The algorithm consists of three main steps: cell type balancing, pre-training and fine-tuning. The rare cell types in reference data are first oversampled using SMOTE(Synthetic Minority Oversampling Technique), and then the reference data is trained with a supervised deep learning framework using MADA(Multi-Adversarial Domain Adaptation). An autoencoder is subsquently used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference data are transferred to the query data based on the fully-trained model. Along with the annotation algorithm, we also collect 136 datasets which were uniformly processed and curated to provide users with comprehensive pretrained models.</p>
+<a class="reference internal image-reference" href="_images/workflow.png"><img alt="_images/workflow.png" src="_images/workflow.png" style="width: 1600px;" /></a>
 </section>
 <section id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="prepare.html">Prepare</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="prepare.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prepare.html#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="prepare.html#prepare-data">Prepare data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="prepare.html#preprocess-of-training-data">Preprocess of training data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="prepare.html#preprocess-of-query-data">Preprocess of query data</a></li>
@@ -89,7 +89,7 @@
 </div>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="run.html">Run Selina</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run SELINA</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="run.html#train">Train</a></li>
 <li class="toctree-l2"><a class="reference internal" href="run.html#predict">Predict</a></li>
 </ul>
