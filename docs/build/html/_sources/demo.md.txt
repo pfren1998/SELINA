@@ -243,4 +243,4 @@ GSM4143262@AACCATGCACGACGAA-1	6.580991e-16	4.516618e-29	9.358461e-18	5.502941e-1
 GSM4143262@AACGTTGAGGCGCTCT-1	2.829751e-13	5.663002e-25	3.487227e-16	1.142975e-12
 ```
 
-![image]('https://github.com/pfren1998/SELINA/blob/main/docs/source/_images/query_cluster.png')
+![image]('https://github.com/pfren1998/SELINA/tree/main/docs/source/_images/query_cluster.png')
