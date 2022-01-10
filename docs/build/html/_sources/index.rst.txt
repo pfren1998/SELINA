@@ -24,6 +24,11 @@ Usage
    :maxdepth: 4
 
    run
+
+.. toctree::
+   :maxdepth: 4
+
+   demo
    
 
 
