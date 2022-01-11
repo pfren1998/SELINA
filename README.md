@@ -46,7 +46,7 @@ The example data are stored in the demos folder.
 
 ### Preprocess of query data
 
-This step is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. Below is an example of the command.
+This step is to normalize, match the assembly version with the reference data, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. Below is an example of the command.
 
 ```
 selina preprocess --format plain --matrix query_data/query.txt --separator tab --gene-idtype symbol --assembly GRCh38 --count-cutoff 0 --gene-cutoff 0 --cell-cutoff 0 --directory ./ --outprefix query --mode single

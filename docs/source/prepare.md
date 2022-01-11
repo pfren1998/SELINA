@@ -49,7 +49,7 @@ reference/
 
 ### Preprocess of query data
 
-In addition to the training data, you also need to preprocess the query data. This step is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
+In addition to the training data, you also need to preprocess the query data. This step is to normalize, match the assembly version with the reference data, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
 
 ```
 usage: selina preprocess [-h] [--format {h5,mtx,plain}] [--matrix MATRIX]

@@ -36,7 +36,7 @@ The query data used here is from [mTORC1 activation in lung mesenchyme drives se
 | GSE134355_Lung-Adult_9113  |                                                  [Construction of a human cell landscape at single-cell level](https://www.nature.com/articles/s41586-020-2157-4)                                                   |
 | GSE146981_Lung-Adult_27015 | [Senescence of Alveolar Type 2 Cells Drives Progressive Pulmonary Fibrosis](https://www.atsjournals.org/doi/10.1164/rccm.202004-1274OC?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed) |
 
-Specifically, the reference datasets are stored in the reference_data folder, and for each dataset there are two corresponding files used in the pre-training stage; one with `expr` provides the expression profile of each dataset, and the file with `meta` presents the cell type and sequencing platform of each cell. Here we take GSE123405_Lung-Adult_7786 as an example to show you the detail information.
+Specifically, the reference datasets are stored in the reference_data folder, and for each dataset there are two corresponding files used in the pretraining stage; one with `expr` provides the expression profile of each dataset, and the file with `meta` presents the cell type and sequencing platform of each cell. Here we take GSE123405_Lung-Adult_7786 as an example to show you the detail information.
 
 ```
 GSE123405_Lung-Adult_7786_expr.txt
@@ -65,7 +65,7 @@ Ciliated Drop-seq
 
 ## 2. Preprocess of query data
 
-The following command is to normalize, match the assembly version with the pretrained model, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix.
+The following command is to normalize, match the assembly version with the reference data, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix.
 
 ```
 selina preprocess --format h5  --matrix query_data/GSE139534_Lung-Adult_10462_gene_count.h5 --gene-idtype symbol --assembly GRCh38 --count-cutoff 1000 --gene-cutoff 500 --cell-cutoff 10 --directory res --outprefix query --mode single
