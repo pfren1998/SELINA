@@ -28,6 +28,8 @@ prob_cutoff <- opts$prob_cutoff
 path_out <- opts$path_out
 outprefix <- opts$outprefix
 
+
+#find differentially expressed genes
 FindMarkers <- function(object, cluster, features = NULL, min.pct = 0.1, logfc.threshold = 0.25,
                                  only.pos = FALSE, return.thresh = 1e-2,
                                  slot = "data") {
@@ -75,6 +77,7 @@ FindMarkers <- function(object, cluster, features = NULL, min.pct = 0.1, logfc.t
   return(res)
 }
 
+#filter cells with low prediction probability
 pred_filter <- function(SeuratObj,pred_label,pred_prob,cell_cutoff,prob_cutoff){
   neighbor_id <- kNN(SeuratObj@reductions[["umap"]]@cell.embeddings, k = 10)$id
   pred_prob <- apply(pred_prob,MARGIN = 1,max)
@@ -112,6 +115,7 @@ theme_box <- function(...){
   )
 }
 
+#generate plots and files indicating the prediction quality for each cluster
 cluster_quality <- function(SeuratObj,filtered_label,pred_prob,path_out){
   pred_prob <- apply(pred_prob,MARGIN = 1,max)
   unknown_percent <- c()
@@ -155,15 +159,21 @@ cluster_quality <- function(SeuratObj,filtered_label,pred_prob,path_out){
   return()
 }
 
+#load data
 SeuratObj <- readRDS(seurat)
 pred_label <- read.table(pred_label, header = FALSE, sep = '\t')[, 1]
 pred_prob <- read.table(pred_prob, header = TRUE, sep = '\t', row.names = 1)
 
+#main step
 if (mode == 'single') {
+  #filter cells with low prediction score
   filtered_label <- pred_filter(SeuratObj,pred_label,pred_prob,cell_cutoff,prob_cutoff)
+  #generate plots and files indicating the prediction quality for each cluster
   cluster_quality(SeuratObj,filtered_label,pred_prob,path_out)
+  #find differentially expressed genes for each cell type
   cluster.genes <- FindMarkers(object = SeuratObj[,filtered_label!='Unknown'], cluster = filtered_label[filtered_label!='Unknown'])
   write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = F, sep = "\t", row.names = FALSE)
+  #output umap plot with predicted cell type labels
   SeuratObj$pred <- filtered_label
   p <- DimPlot(object = SeuratObj[,filtered_label!='Unknown'], label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
   ggsave(file.path(path_out, paste0(outprefix, "_pred.png")), p, width = 7, height = 5)
