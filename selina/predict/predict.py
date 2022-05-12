@@ -1,3 +1,4 @@
+from email.policy import default
 import torch
 from torch.autograd import Function
 import torch.nn as nn
@@ -23,43 +24,61 @@ params_tune2 = [0.0001, 10, 128]
 def predict_parser(subparsers):
     workflow = subparsers.add_parser(
         'predict', help='Fine-tuning and predict for the query data. ')
-    group_predict = workflow.add_argument_group('Arguments for prediction.')
-    group_predict.add_argument(
+    group_input = workflow.add_argument_group('Arguments for input.')
+    group_input.add_argument(
         '--mode',
         type=str,
         required=True,
         choices=['single', 'cluster'],
         help='Single-cell level input or cluster level input.')
-    group_predict.add_argument('--input',
-                               type=str,
-                               required=True,
-                               help='File path of query data.')
-    group_predict.add_argument('--model',
-                               type=str,
-                               required=True,
-                               help='File path of the pre-trained model.')
-    group_predict.add_argument('--path_out',
-                               type=str,
-                               required=True,
-                               help='File path of the output files.')
-    group_predict.add_argument(
+    group_input.add_argument('--query-expr',
+                             dest='query_expr',
+                             type=str,
+                             required=True,
+                             help='File path of query data matrix.')
+    group_input.add_argument('--model',
+                             type=str,
+                             required=True,
+                             help='File path of the pre-trained model.')
+    group_input.add_argument('--seurat',
+                             type=str,
+                             required=True,
+                             help='Path of seurat object.')
+    group_input.add_argument('--disease',
+                             action="store_true",
+                             help='The input data is from disease condition.')
+    group_cutoff = workflow.add_argument_group(
+        'Cutoff for downstream analysis')
+    group_cutoff.add_argument(
+        '--cell-cutoff',
+        dest='cell_cutoff',
+        type=int,
+        required=False,
+        default=5,
+        help=
+        'Cutoff for cells with the same cell type in 10 nearest neighbor cells(only used when the input is sinle-cell level expression matrix). DEFAULT: 5.'
+    )
+    group_cutoff.add_argument(
+        '--prob-cutoff',
+        dest='prob_cutoff',
+        type=float,
+        required=False,
+        default=0.9,
+        help='Cutoff for prediction probability. DEFAULT: 0.9.')
+
+    group_output = workflow.add_argument_group('Output Arguments')
+    group_output.add_argument('--path-out',
+                              dest='path_out',
+                              type=str,
+                              required=False,
+                              default='SELINA_res',
+                              help='File path of the output files.')
+    group_output.add_argument(
         '--outprefix',
         type=str,
         required=False,
         default='query',
         help='Prefix of the output files. DEFAULT: query')
-    group_plot = workflow.add_argument_group('Arguments for plot')
-    group_plot.add_argument(
-        '--plot',
-        type=str,
-        required=True,
-        choices=['True', 'False'],
-        default='False',
-        help='Whether to generate umap plot. DEFAULT: False')
-    group_plot.add_argument('--rds',
-                            type=str,
-                            required=False,
-                            help='File path of rds file.')
 
 
 def merge(genes, query_expr):
@@ -190,44 +209,55 @@ def test(test_df, network, ct_dic):
                 class_output.argmax(dim=1).cpu().numpy().tolist())
             pred_prob.append(class_output.cpu().numpy())
         pred_labels = [ct_dic_rev[i] for item in pred_labels for i in item]
-        pred_labels = pd.DataFrame({
-            'Cell': test_df.columns,
-            'Prediction': pred_labels
-        })
         pred_prob = pd.DataFrame(reduce(pd.concat, pred_prob))
         pred_prob.index = test_df.columns
         pred_prob.columns = ct_dic.keys()
     return pred_labels, pred_prob
 
 
-def query_predict(input, model, path_out, outprefix):
+def query_predict(query_expr, model, path_out, outprefix, disease, mode):
     print('Loading data')
-    query_expr = read_expr(input)
+    query_expr = read_expr(query_expr)
     with open(model.replace('params', 'meta').replace('pt', 'pkl'), 'rb') as f:
         meta = pickle.load(f)
     genes, ct_dic = meta['genes'], meta['celltypes']
     query_expr = merge(genes, query_expr)
     nfeatures, nct = len(genes), len(ct_dic)
-    network = torch.load(model, map_location = device)
+    network = torch.load(model, map_location=device)
     network = Autoencoder(network, nfeatures, nct)
-    print('Fine-tuning1')
-    network = tune1(query_expr, network, params_tune1)
-    print('Fine-tuning2')
-    network = tune2(query_expr, network, params_tune2)
+    if (not disease) & (mode != 'cluster'):
+        print('Fine-tuning1')
+        network = tune1(query_expr, network, params_tune1)
+        print('Fine-tuning2')
+        network = tune2(query_expr, network, params_tune2)
     network = Classifier(network).to(device)
     pred_labels, pred_prob = test(query_expr, network, ct_dic)
-    pd.DataFrame(pred_labels).to_csv(path_out + '/' + outprefix + '_predictions.txt',
+
+    try:
+        os.makedirs(path_out)
+    except OSError:
+        pass
+
+    pd.DataFrame(pred_labels).to_csv(path_out + '/' + outprefix +
+                                     '_predictions.txt',
                                      index=False,
-                                     header=True,
+                                     header=False,
                                      sep='\t')
-    pd.DataFrame(pred_prob).to_csv(path_out + '/' + outprefix + '_probability.txt',
+    pd.DataFrame(pred_prob).to_csv(path_out + '/' + outprefix +
+                                   '_probability.txt',
                                    index=True,
                                    header=True,
                                    sep='\t')
     print('Finish Prediction')
 
-def query_plot(rds,path_out,outprefix,mode):
-    print('Plotting')
-    cmd = 'Rscript ' + os.path.split(os.path.abspath(__file__))[0] + '/plot.R ' + ' --rds ' + rds + ' --celltype ' + path_out + '/' + outprefix + '_predictions.txt' + ' --path_out ' + path_out + ' --mode ' + mode
+
+def predict_downstream(mode, seurat, cell_cutoff, prob_cutoff, path_out,
+                       outprefix):
+    cmd = 'Rscript ' + os.path.split(
+        os.path.abspath(__file__)
+    )[0] + '/downstream.R ' + ' --mode ' + mode + ' --seurat ' + seurat + ' --pred_label ' + path_out + '/' + outprefix + '_predictions.txt' + ' --pred_prob ' + path_out + '/' + outprefix + '_probability.txt' + ' --cell_cutoff ' + str(
+        cell_cutoff) + ' --prob_cutoff ' + str(
+            prob_cutoff
+        ) + ' --path_out ' + path_out + '  --outprefix ' + outprefix
     os.system(cmd)
-    print('Finish plotting')
+    print('Finish downstream')

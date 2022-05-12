@@ -15,6 +15,7 @@ import argparse as ap
 import pickle
 from imblearn.over_sampling import SMOTE
 from collections import Counter
+import os
 
 params_train = [0.0001, 50, 128]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -23,11 +24,13 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 def train_parser(subparsers):
     train = subparsers.add_parser(
         "train", help="Pre-training using provided data based on MADA.")
-    train.add_argument('--path_in',
+    train.add_argument('--path-in',
+                       dest='path_in',
                        type=str,
                        required=True,
                        help='File path of training datasets.')
-    train.add_argument('--path_out',
+    train.add_argument('--path-out',
+                       dest='path_out',
                        type=str,
                        required=True,
                        help='File path of the output model.')
@@ -75,27 +78,29 @@ def preprocessing(path_in):
     ct_freqs = Counter([i for item in celltypes for i in item])
     max_n = max(ct_freqs.values())
     rct_freqs = {}
-    if  max_n < 500:
+    if max_n < 500:
         sample_n = 100
     elif max_n < 1000:
         sample_n = 500
     else:
         sample_n = 1000
-    for ct,freq in ct_freqs.items():
+    for ct, freq in ct_freqs.items():
         if freq <= sample_n:
             rct_freqs[ct] = freq
-                
+
     for i in range(len(samples)):
         sample_ct_freq = {}
         ct_freq = Counter(celltypes[i])
-        if len(ct_freq)>1:
-            for ct,freq in rct_freqs.items():
+        if len(ct_freq) > 1:
+            for ct, freq in rct_freqs.items():
                 if (ct in ct_freq.keys()) & (ct_freq[ct] >= 6):
-                    sample_ct_freq[ct] = round(sample_n * ct_freq[ct]/freq)
-            smo = SMOTE(sampling_strategy = sample_ct_freq,random_state=1)
-            train_sets[i],celltypes[i] = smo.fit_resample(train_sets[i].T,celltypes[i])
-            train_sets[i] = train_sets[i].T         
-            platforms[i] = np.unique(platforms[i]).tolist() * train_sets[i].shape[1]
+                    sample_ct_freq[ct] = round(sample_n * ct_freq[ct] / freq)
+            smo = SMOTE(sampling_strategy=sample_ct_freq, random_state=1)
+            train_sets[i], celltypes[i] = smo.fit_resample(
+                train_sets[i].T, celltypes[i])
+            train_sets[i] = train_sets[i].T
+            platforms[i] = np.unique(
+                platforms[i]).tolist() * train_sets[i].shape[1]
     platforms = [i for item in platforms for i in item]
     celltypes = [i for item in celltypes for i in item]
     for i in range(len(samples)):
@@ -105,6 +110,7 @@ def preprocessing(path_in):
         train_sets[i] = np.log2(train_sets[i] + 1)
     train_data = pd.concat(train_sets, axis=1)
     return train_data, celltypes, platforms, genes
+
 
 # def preprocessing(path_in):
 #     samples = sorted(glob.glob(path_in + '/*_expr.txt'))
@@ -237,14 +243,20 @@ def train(train_data, params, celltypes, platforms, nfeatures, nct, nplat,
     return network
 
 
-def train_model(path_in, path_out, prefix):
+def train_model(path_in, path_out, outprefix):
     train_data, celltypes, platforms, genes = preprocessing(path_in)
     ct_dic, plat_dic = label2dic(celltypes), label2dic(platforms)
     nfeatures, nct, nplat = train_data.shape[0], len(ct_dic), len(plat_dic)
     network = train(train_data, params_train, celltypes, platforms, nfeatures,
                     nct, nplat, ct_dic, plat_dic, device)
-    torch.save(network, path_out + '/' + prefix + '_params.pt')
+
+    try:
+        os.makedirs(path_out)
+    except OSError:
+        pass
+
+    torch.save(network, path_out + '/' + outprefix + '_params.pt')
     model_meta = {'genes': genes, 'celltypes': ct_dic}
-    with open(path_out + '/' + prefix + '_meta.pkl', 'wb') as f:
+    with open(path_out + '/' + outprefix + '_meta.pkl', 'wb') as f:
         pickle.dump(model_meta, f)
     print('All done')

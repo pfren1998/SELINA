@@ -10,8 +10,10 @@ def preprocess_parser(subparsers):
     workflow = subparsers.add_parser(
         "preprocess",
         help="Run preprocess pipeline from scRNA-seq gene-cell count matrix.")
+
     group_input = workflow.add_argument_group("Input files arguments")
     group_input.add_argument("--format",
+                             required=True,
                              dest="format",
                              default="",
                              choices=["h5", "mtx", "plain"],
@@ -48,6 +50,13 @@ def preprocess_parser(subparsers):
         "If the format is 'mtx', please specify which column of the feature file to use for gene names. DEFAULT: 2."
     )
     group_input.add_argument(
+        "--barcode",
+        dest="barcode",
+        default="barcodes.tsv",
+        help="Location of barcode file (required for the format of 'mtx'). "
+        "Cell barcodes correspond to column indices of count matrix. DEFAULT: barcodes.tsv. "
+    )
+    group_input.add_argument(
         "--gene-idtype",
         dest="gene_idtype",
         default="symbol",
@@ -56,42 +65,10 @@ def preprocess_parser(subparsers):
         "Type of gene name, 'symbol' for gene symbol and 'ensembl' for ensembl id. DEFAULT: symbol."
     )
     group_input.add_argument(
-        "--barcode",
-        dest="barcode",
-        default="barcodes.tsv",
-        help="Location of barcode file (required for the format of 'mtx'). "
-        "Cell barcodes correspond to column indices of count matrix. DEFAULT: barcodes.tsv. "
-    )
-    # group_input.add_argument(
-    #     "--meta-file",
-    #     dest="meta_file",
-    #     default="",
-    #     help="Location of metadata file. "
-    #     "The metadata file should be a table with cells as rows and meta information as columns. "
-    #     "The first line of the metadata file should contain the names of the variables."
-    # )
-    # group_input.add_argument(
-    #     "--meta-sep",
-    #     dest="meta_sep",
-    #     default="tab",
-    #     choices=["tab", "space", "comma"],
-    #     help="The separating character of the metadata file. "
-    #     "Values on each line of the metadata file will be separated by the character. DEFAULT: tab."
-    # )
-    # group_input.add_argument(
-    #     "--meta-cell-column",
-    #     dest="meta_cell",
-    #     default=1,
-    #     type=int,
-    #     help=
-    #     "Please specify which column of the metadata file to use for cell ID. DEFAULT: 1."
-    # )
-    group_input.add_argument(
         "--assembly",
         dest="assembly",
         default="GRCh38",
         choices=["GRCh38", "GRCh37"],
-        type=str,
         help="Assembly (GRCh38/hg38 and GRCh37/hg19). DEFAULT: GRCh38.")
 
     # Quality control cutoff
@@ -116,6 +93,38 @@ def preprocess_parser(subparsers):
         type=int,
         help="Cutoff for the number of cells covered by each gene. DEFAULT: 10."
     )
+    group_cutoff.add_argument(
+        "--mito",
+        dest="mito",
+        action="store_true",
+        help="Filter cells with a high percentage of mitochondria genes.")
+    group_cutoff.add_argument(
+        "--mito-cutoff",
+        dest="mito_cutoff",
+        default=0.2,
+        type=float,
+        help=
+        "Cutoff for the percentage of mitochondria genes in each cell. DEFAULT: 0.2."
+    )
+
+    group_process = workflow.add_argument_group("Process arguments")
+    group_process.add_argument(
+        "--variable-genes",
+        dest="variable_genes",
+        default=2000,
+        type=int,
+        help="Number of variable genes used in PCA. DEFAULT: 2000.")
+    group_process.add_argument(
+        "--npcs",
+        dest="npcs",
+        default=30,
+        type=int,
+        help="Number of dimensions after PCA. DEFAULT: 30.")
+    group_process.add_argument("--cluster-res",
+                               dest="cluster_res",
+                               default=0.6,
+                               type=float,
+                               help="Clustering resolution. DEFAULT: 0.6.")
 
     group_output = workflow.add_argument_group("Output arguments")
     group_output.add_argument(
@@ -140,14 +149,9 @@ def preprocess_parser(subparsers):
 
 
 # Generate Rscript
-# def GenerateRscript(count_file, gene_idtype, gene_cutoff, cell_cutoff,
-#                     meta_file, meta_sep, meta_cell, assembly, outprefix,
-#                     directory):
-
-
-# Generate Rscript
-def GenerateRscript(count_file, gene_idtype, gene_cutoff, cell_cutoff,
-                    assembly, outprefix, directory, mode):
+def GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff, mito,
+                    mito_cutoff, variable_genes, npcs, cluster_res, outprefix,
+                    directory, mode):
 
     rfile = os.path.join(directory, "%s.R" % (outprefix))
     outf = open(rfile, "w")
@@ -156,121 +160,94 @@ def GenerateRscript(count_file, gene_idtype, gene_cutoff, cell_cutoff,
     rsrcPath = os.path.split(os.path.split(
         os.path.abspath(__file__))[0])[0] + '/r'
 
-    # load package
+    #========load package========
     script = '''# load package
-suppressMessages(library(Seurat))
-suppressMessages(library(ggplot2))
-suppressMessages(library(dplyr))
-suppressMessages(library(data.table))
-source("%s/RNARunSeurat.R")
-source('%s/RNAAssemblyConvert.R')
-source('%s/RNAEnsemblToSymbol.R')
-source('%s/FindAllMarkersMAESTRO.R')
-\n
-''' % (rsrcPath, rsrcPath, rsrcPath, rsrcPath)
+        suppressMessages(library(Seurat))
+        suppressMessages(library(ggplot2))
+        suppressMessages(library(dplyr))
+        suppressMessages(library(data.table))
+        source("%s/RNARunSeurat.R")
+        source('%s/RNAAssemblyConvert.R')
+        source('%s/RNAEnsemblToSymbol.R')
+    ''' % (rsrcPath, rsrcPath, rsrcPath)
     outf.write(script)
 
-    # read data
-    script = '''# read data
-expr = Read10X_h5("%s")
-''' % (count_file)
+    #========assembly conversion and gene id conversion========
+    script = '''
+        # read data
+        expr = Read10X_h5("%s")
+    ''' % (count_file)
     outf.write(script)
 
-    # assembly conversion and gene id conversion
     if assembly == "GRCh37":
         if gene_idtype == "symbol":
             script = '''
-# assembly conversion
-expr = RNAAssemblyConvert(expr, from = "GRCh37", to = "GRCh38", dataPath = "%s")
-''' % (refGenePath)
+                # assembly conversion
+                expr = RNAAssemblyConvert(expr, from = "GRCh37", to = "GRCh38", dataPath = "%s")
+            ''' % (refGenePath)
         elif gene_idtype == "ensembl":
             script = '''
-# gene id conversion
-expr = RNAEnsemblToSymbol(expr, assembly = "GRCh37", dataPath = "%s")
-expr = RNAAssemblyConvert(expr, from = "GRCh37", to = "GRCh38", dataPath = "%s")
-''' % (refGenePath, refGenePath)
+                # gene id conversion
+                expr = RNAEnsemblToSymbol(expr, assembly = "GRCh37", dataPath = "%s")
+                expr = RNAAssemblyConvert(expr, from = "GRCh37", to = "GRCh38", dataPath = "%s")
+            ''' % (refGenePath, refGenePath)
         outf.write(script)
 
     elif assembly == "GRCh38":
         if gene_idtype == "ensembl":
             script = '''
-# gene id conversion
-expr = RNAEnsemblToSymbol(expr, assembly = "GRCh38", dataPath = "%s")
-''' % (refGenePath)
+                # gene id conversion
+                expr = RNAEnsemblToSymbol(expr, assembly = "GRCh38", dataPath = "%s")
+            ''' % (refGenePath)
             outf.write(script)
 
-    assembly = "GRCh38"
 
-    # analysis
+#========analysis========
+    if mito:
+        mito = 'TRUE'
+    else:
+        mito = 'FALSE'
+        
     script = '''
-# choose optimal pc and resolution based on cell number
-cells <- ncol(expr)
-if (cells <= 5000) {
-npc <- 50; cluster.res <- 0.6
-} else if(cells <= 100000) {
-npc <- 50; cluster.res <- 1
-} else {
-npc <- 100; cluster.res <- 1
-}\n
-
-# clustering
-RNA.res = RNARunSeurat(inputMat = expr, 
-                       project = "%s", 
-                       min.c = %d,
-                       min.g = %d,
-                       npcs = npc,
-                       variable.genes = 2000, 
-                       assembly = "%s",
-                       cluster.res = cluster.res,
-                       outdir = "%s",
-                       mode = "%s")\n
-''' % (outprefix, cell_cutoff, gene_cutoff, assembly, directory, mode)
+        # clustering
+        RNA.res = RNARunSeurat(inputMat = expr, 
+                            project = "%s", 
+                            min.c = %d,
+                            mito = as.logical("%s"),
+                            mito.cutoff = %f,
+                            variable.genes = %d, 
+                            npcs = %d,
+                            cluster.res = %f,
+                            outdir = "%s",
+                            mode = "%s",
+                            outprefix = "%s")
+    ''' % (outprefix, cell_cutoff, mito, mito_cutoff, variable_genes, npcs,
+           cluster_res, directory, mode, outprefix)
     outf.write(script)
 
-    # # read metadata
-    # if meta_file:
-    #     if meta_sep == "tab":
-    #         sep = "\\t"
-    #     elif meta_sep == "space":
-    #         sep = " "
-    #     elif meta_sep == "comma":
-    #         sep = ","
-    #     script = '''
-    # add metadata
-    # meta = read.delim("%s", header = T, row.names = %d, sep = "%s")
-    # RNA.res$RNA@meta.data = cbind(RNA.res$RNA@meta.data, meta[colnames(RNA.res$RNA),, drop = FALSE])
-    # for (i in colnames(meta)) {
-    #   p = DimPlot(object = RNA.res$RNA, group = i, label = FALSE, pt.size = 0.1)
-    #   if (length(unique(RNA.res$RNA@meta.data[,i])) > 20) {
-    #     plot_width = 10
-    #   } else {
-    #     plot_width = 7
-    #   }
-    #   ggsave(file.path("%s", paste0(RNA.res$RNA@project.name, "_", i, ".png")), p,  width=plot_width, height=5)
-    # }
-    # ''' % (os.path.abspath(meta_file), meta_cell, sep, directory)
-    #         outf.write(script)
-
+    #========save seurat object========
     script = '''
-# save object
-saveRDS(RNA.res, "%s_res.rds")
-''' % (os.path.join(directory, outprefix))
+        # save object
+        saveRDS(RNA.res, "%s_res.rds")
+    ''' % (os.path.join(directory, outprefix))
     outf.write(script)
 
+    #========finish srcipt output========
     outf.close()
     return os.path.abspath(rfile)
 
 
-# def query_preprocess(directory, outprefix, fileformat, matrix, separator,
-#  feature, gene_column, gene_idtype, barcode, meta_file,
-#  meta_sep, meta_cell, count_cutoff, gene_cutoff,
-#  cell_cutoff, assembly):
-
-
 def query_preprocess(directory, outprefix, fileformat, matrix, separator,
                      feature, gene_column, gene_idtype, barcode, count_cutoff,
-                     gene_cutoff, cell_cutoff, assembly, mode):
+                     gene_cutoff, cell_cutoff, mito, mito_cutoff,
+                     variable_genes, npcs, cluster_res, assembly, mode):
 
+    try:
+        os.makedirs(directory)
+    except OSError:
+        pass
+
+    assembly = "GRCh38"
     scrna_qc(directory + "/Data", outprefix, fileformat, matrix, separator,
              feature, gene_column, barcode, count_cutoff, gene_cutoff,
              cell_cutoff, assembly)
@@ -279,14 +256,9 @@ def query_preprocess(directory, outprefix, fileformat, matrix, separator,
         os.path.join(directory + "/Data",
                      outprefix + "_filtered_gene_count.h5"))
 
-    # rscript = GenerateRscript(count_file, gene_idtype, gene_cutoff,
-    #                           cell_cutoff, meta_file, meta_sep, meta_cell,
-    #                           assembly, outprefix, directory)
-    rscript = GenerateRscript(count_file, gene_idtype, gene_cutoff,
-                              cell_cutoff, assembly, outprefix, directory,
-                              mode)
+    rscript = GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff,
+                              mito, mito_cutoff, variable_genes, npcs,
+                              cluster_res, outprefix, directory, mode)
 
     cmd = "Rscript %s" % (rscript)
-    os.system(cmd)
-    cmd = "rm -r %s; rm -r %s" % (rscript, directory + "/Data")
     os.system(cmd)

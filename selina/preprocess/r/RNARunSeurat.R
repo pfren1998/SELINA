@@ -1,25 +1,18 @@
-RNARunSeurat <- function(inputMat, type = "matrix", project = "query", orig.ident = NULL,
-                         min.c = 10, min.g = 200, mito = FALSE, mito.cutoff = 0.2, variable.genes = 2000, assembly = "GRCh38", cluster.res = 0.6, npcs = 50, outdir = ".", mode = "single") {
-  if (type == "matrix") { SeuratObj <- CreateSeuratObject(inputMat, project = project, min.cells = min.c, min.features = min.g) }
-  if (type == "object") { SeuratObj <- inputMat }
+RNARunSeurat <- function(inputMat, project, 
+                         min.c, mito, mito.cutoff, variable.genes, npcs, cluster.res, outdir, mode, outprefix) {
+  SeuratObj <- CreateSeuratObject(inputMat, project = project, min.cells = min.c)
 
   #=========Mitochondria and Spike-in========  
   if (mito) {
     message("Check the mitochondria and spike-in percentage ...")
-    if (assembly == "GRCh38") {
-      mito.genes <- grep("^MT-", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
-      ercc.genes <- grep("^ERCC", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
-    }
-    else {
-      mito.genes <- grep("^mt-", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
-      ercc.genes <- grep("^ercc", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
-    }
+    mito.genes <- grep("^MT-", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
+    ercc.genes <- grep("^ERCC", rownames(GetAssayData(object = SeuratObj)), value = TRUE)
     percent.mito <- Matrix::colSums(GetAssayData(object = SeuratObj)[mito.genes,]) / Matrix::colSums(GetAssayData(object = SeuratObj))
     percent.ercc <- Matrix::colSums(GetAssayData(object = SeuratObj)[ercc.genes,]) / Matrix::colSums(GetAssayData(object = SeuratObj))
     SeuratObj$percent.mito <- percent.mito
     SeuratObj$percent.ercc <- percent.ercc
     p1 <- VlnPlot(SeuratObj, c("percent.mito", "percent.ercc"), ncol = 2)
-    ggsave(file.path(outdir, paste0(SeuratObj@project.name, ".spikein.png")), p1, width = 6, height = 4.5)
+    ggsave(file.path(outdir, paste0(outprefix, ".spikein.png")), p1, width = 6, height = 4.5)
 
     SeuratObj <- subset(x = SeuratObj, subset = percent.mito < mito.cutoff)
     SeuratObj <- subset(x = SeuratObj, subset = percent.ercc < 0.05)
@@ -38,8 +31,6 @@ RNARunSeurat <- function(inputMat, type = "matrix", project = "query", orig.iden
   #=========PCA===========
   message("PCA analysis ...")
   SeuratObj <- RunPCA(object = SeuratObj, features = VariableFeatures(SeuratObj), npcs = npcs)
-  # p2 = ElbowPlot(object = SeuratObj, ndims = SeuratObj@commands$RunPCA.RNA@params$npcs)
-  # ggsave(file.path(outdir, paste0(SeuratObj@project.name, "_PCElbowPlot.png")), p2, width = 10, height = 4)
 
   #=========UMAP===========
   message("UMAP analysis ...")
@@ -50,23 +41,28 @@ RNARunSeurat <- function(inputMat, type = "matrix", project = "query", orig.iden
   SeuratObj <- RunUMAP(object = SeuratObj, reduction = "pca", dims = dims.use)
   SeuratObj <- FindNeighbors(object = SeuratObj, reduction = "pca", dims = dims.use)
   SeuratObj <- FindClusters(object = SeuratObj, resolution = cluster.res)
-  # p3 <- DimPlot(object = SeuratObj, label = TRUE, pt.size = 0.2)
-  # ggsave(file.path(outdir, paste0(SeuratObj@project.name, "_cluster.png")), p3, width = 5, height = 4)
+  ggsave(file.path(outdir, paste0(outprefix, "_cluster.png")), DimPlot(object = SeuratObj, label = TRUE, pt.size = 0.2, repel = TRUE), width = 5, height = 4)
+
+  #generate single-cell level expression matrix
   single_exprmat <- as.matrix(SeuratObj@assays$RNA@counts)
   genes <- as.data.frame(rownames(single_exprmat))
   colnames(genes) <- 'Gene'
   single_exprmat <- cbind(genes, single_exprmat)
+
+  #generate cluster level expression matrix
   cluster_exprmat = as.matrix(AverageExpression(SeuratObj, assays = 'RNA', slot = 'counts')$RNA)
   genes <- as.data.frame(rownames(cluster_exprmat))
   colnames(genes) <- 'Gene'
   cluster_exprmat <- cbind(genes, cluster_exprmat)
+
+  #output expression matrix
   if (mode == 'single') {
-    fwrite(single_exprmat, file.path(outdir, paste0(SeuratObj@project.name, "_single_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
+    fwrite(single_exprmat, file.path(outdir, paste0(outprefix, "_single_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
   } else if (mode == 'cluster') {
-    fwrite(cluster_exprmat, file.path(outdir, paste0(SeuratObj@project.name, "_cluster_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
+    fwrite(cluster_exprmat, file.path(outdir, paste0(outprefix, "_cluster_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
   } else {
-    fwrite(single_exprmat, file.path(outdir, paste0(SeuratObj@project.name, "_single_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
-    fwrite(cluster_exprmat, file.path(outdir, paste0(SeuratObj@project.name, "_cluster_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
+    fwrite(single_exprmat, file.path(outdir, paste0(outprefix, "_single_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
+    fwrite(cluster_exprmat, file.path(outdir, paste0(outprefix, "_cluster_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
   }
   return(SeuratObj)
 }
