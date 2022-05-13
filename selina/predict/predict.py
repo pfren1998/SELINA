@@ -24,7 +24,7 @@ params_tune2 = [0.0001, 10, 128]
 def predict_parser(subparsers):
     workflow = subparsers.add_parser(
         'predict', help='Fine-tuning and predict for the query data. ')
-    group_input = workflow.add_argument_group('Arguments for input.')
+    group_input = workflow.add_argument_group('Arguments for input')
     group_input.add_argument(
         '--mode',
         type=str,
@@ -35,7 +35,7 @@ def predict_parser(subparsers):
                              dest='query_expr',
                              type=str,
                              required=True,
-                             help='File path of query data matrix.')
+                             help='File path of the query data matrix.')
     group_input.add_argument('--model',
                              type=str,
                              required=True,
@@ -43,10 +43,12 @@ def predict_parser(subparsers):
     group_input.add_argument('--seurat',
                              type=str,
                              required=True,
-                             help='Path of seurat object.')
-    group_input.add_argument('--disease',
-                             action="store_true",
-                             help='The input data is from disease condition.')
+                             help='File path of the seurat object.')
+    group_input.add_argument(
+        '--disease',
+        action="store_true",
+        help=
+        'This flag should be used when the data is in some disease condition')
     group_cutoff = workflow.add_argument_group(
         'Cutoff for downstream analysis')
     group_cutoff.add_argument(
@@ -56,7 +58,7 @@ def predict_parser(subparsers):
         required=False,
         default=5,
         help=
-        'Cutoff for cells with the same cell type in 10 nearest neighbor cells(only used when the input is sinle-cell level expression matrix). DEFAULT: 5.'
+        'Cutoff for number of cells with the same cell type in 10 nearest neighbor cells(only used when the input is single-cell level expression matrix). DEFAULT: 5.'
     )
     group_cutoff.add_argument(
         '--prob-cutoff',
@@ -253,6 +255,7 @@ def query_predict(query_expr, model, path_out, outprefix, disease, mode):
 
 def predict_downstream(mode, seurat, cell_cutoff, prob_cutoff, path_out,
                        outprefix):
+    print('Begin downstream analysis')
     cmd = 'Rscript ' + os.path.split(
         os.path.abspath(__file__)
     )[0] + '/downstream.R ' + ' --mode ' + mode + ' --seurat ' + seurat + ' --pred_label ' + path_out + '/' + outprefix + '_predictions.txt' + ' --pred_prob ' + path_out + '/' + outprefix + '_probability.txt' + ' --cell_cutoff ' + str(
@@ -260,4 +263,4 @@ def predict_downstream(mode, seurat, cell_cutoff, prob_cutoff, path_out,
             prob_cutoff
         ) + ' --path_out ' + path_out + '  --outprefix ' + outprefix
     os.system(cmd)
-    print('Finish downstream')
+    print('Finish downstream analysis')

@@ -28,7 +28,7 @@ Usage
 .. toctree::
    :maxdepth: 4
 
-   demo
+   examples
    
 
 

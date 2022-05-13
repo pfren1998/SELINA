@@ -97,7 +97,9 @@ def preprocess_parser(subparsers):
         "--mito",
         dest="mito",
         action="store_true",
-        help="Filter cells with a high percentage of mitochondria genes.")
+        help=
+        "This flag should be used when you want to filter out cells with a high percentage of mitochondria genes."
+    )
     group_cutoff.add_argument(
         "--mito-cutoff",
         dest="mito_cutoff",
@@ -166,10 +168,12 @@ def GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff, mito,
         suppressMessages(library(ggplot2))
         suppressMessages(library(dplyr))
         suppressMessages(library(data.table))
+        suppressMessages(library(presto))
         source("%s/RNARunSeurat.R")
         source('%s/RNAAssemblyConvert.R')
         source('%s/RNAEnsemblToSymbol.R')
-    ''' % (rsrcPath, rsrcPath, rsrcPath)
+        source('%s/FindMarkersMAESTRO.R')
+    ''' % (rsrcPath, rsrcPath, rsrcPath, rsrcPath)
     outf.write(script)
 
     #========assembly conversion and gene id conversion========
@@ -207,7 +211,7 @@ def GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff, mito,
         mito = 'TRUE'
     else:
         mito = 'FALSE'
-        
+
     script = '''
         # clustering
         RNA.res = RNARunSeurat(inputMat = expr, 
@@ -228,8 +232,10 @@ def GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff, mito,
     #========save seurat object========
     script = '''
         # save object
-        saveRDS(RNA.res, "%s_res.rds")
-    ''' % (os.path.join(directory, outprefix))
+        saveRDS(RNA.res[[1]], "%s_res.rds")
+        # output differentially expressed genes
+        write.table(RNA.res[[2]], file.path("%s", paste0("%s", "_cluster_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
+    ''' % (os.path.join(directory, outprefix), directory, outprefix)
     outf.write(script)
 
     #========finish srcipt output========

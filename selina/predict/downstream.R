@@ -30,12 +30,12 @@ outprefix <- opts$outprefix
 
 
 #find differentially expressed genes
-FindMarkers <- function(object, cluster, features = NULL, min.pct = 0.1, logfc.threshold = 0.25,
+FindMarkers <- function(object, celltypes, features = NULL, min.pct = 0.1, logfc.threshold = 0.25,
                                  only.pos = FALSE, return.thresh = 1e-2,
                                  slot = "data") {
   matrix = GetAssayData(object, slot = slot)
   features = rownames(matrix)
-  y <- cluster
+  y <- celltypes
   y <- factor(y)
   test.res = wilcoxauc(matrix, y)
 
@@ -64,7 +64,7 @@ FindMarkers <- function(object, cluster, features = NULL, min.pct = 0.1, logfc.t
   test.res$avg_logFC <- as.vector(lfc)
   res <- test.res[, c("pval", "avg_logFC", "pct_in", "pct_out", "padj", "group", "feature")]
   res[, c("pct_in", "pct_out")] = round(res[, c("pct_in", "pct_out")] / 100, digits = 3)
-  colnames(res) <- c("p_val", "avg_logFC", "pct.1", "pct.2", "p_val_adj", "cluster", "gene")
+  colnames(res) <- c("p_val", "avg_logFC", "pct.1", "pct.2", "p_val_adj", "celltype", "gene")
   res <- res %>% dplyr::filter(.data$p_val < return.thresh &
                          abs(.data$avg_logFC) > logfc.threshold &
                          (.data$pct.1 > min.pct |
@@ -73,7 +73,7 @@ FindMarkers <- function(object, cluster, features = NULL, min.pct = 0.1, logfc.t
   if (only.pos) {
     res <- res %>% dplyr::filter(.data$avg_logFC > 0)
   }
-  res <- res %>% dplyr::arrange(.data$cluster, .data$p_val, desc(.data$avg_logFC))
+  res <- res %>% dplyr::arrange(.data$celltype, .data$p_val, desc(.data$avg_logFC))
   return(res)
 }
 
@@ -154,7 +154,7 @@ cluster_quality <- function(SeuratObj,filtered_label,pred_prob,path_out){
         )
   )
   dev.off()
-  write.table(pred_prob,file.path(path_out, paste0(outprefix, "_cluster_prob.txt")),col.names = TRUE,row.names = FALSE, quote = FALSE, sep = '\t')
+  write.table(pred_prob,file.path(path_out, paste0(outprefix, "_prob.txt")),col.names = TRUE,row.names = FALSE, quote = FALSE, sep = '\t')
   write.table(unknown_percent,file.path(path_out, paste0(outprefix, "_unknown_percent.txt")),col.names = TRUE,row.names = FALSE, quote = FALSE, sep = '\t')
   return()
 }
@@ -171,13 +171,13 @@ if (mode == 'single') {
   #generate plots and files indicating the prediction quality for each cluster
   cluster_quality(SeuratObj,filtered_label,pred_prob,path_out)
   #find differentially expressed genes for each cell type
-  cluster.genes <- FindMarkers(object = SeuratObj[,filtered_label!='Unknown'], cluster = filtered_label[filtered_label!='Unknown'])
+  cluster.genes <- FindMarkers(object = SeuratObj[,filtered_label!='Unknown'], celltypes = filtered_label[filtered_label!='Unknown'])
   write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = F, sep = "\t", row.names = FALSE)
   #output umap plot with predicted cell type labels
   SeuratObj$pred <- filtered_label
   p <- DimPlot(object = SeuratObj[,filtered_label!='Unknown'], label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
   ggsave(file.path(path_out, paste0(outprefix, "_pred.png")), p, width = 7, height = 5)
-  write.table(data.frame(Cell=colnames(SeuratObj),Prediction=filtered_label),file.path(path_out, paste0(outprefix, "_predictions.txt")),col.names=TRUE,row.names=FALSE,quote=FALSE,sep='\t')
+  write.table(data.frame(Cell=colnames(SeuratObj),Prediction=filtered_label,Cluster=SeuratObj$seurat_clusters),file.path(path_out, paste0(outprefix, "_predictions.txt")),col.names=TRUE,row.names=FALSE,quote=FALSE,sep='\t')
 
 } else {
   SeuratObj$pred <- 'pred'
@@ -186,9 +186,9 @@ if (mode == 'single') {
   for (i in 1:length(pred_label)) {
     SeuratObj$pred[SeuratObj$seurat_clusters == as.character(i - 1)] = pred_label[i]
   }
-  cluster.genes <- FindMarkers(object = SeuratObj, cluster = SeuratObj$pred)
-  write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = F, sep = "\t")
-  p <- DimPlot(object = SeuratObj, label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
+  cluster.genes <- FindMarkers(object = SeuratObj[,SeuratObj$pred!='Unknown'], celltypes = SeuratObj$pred[SeuratObj$pred!='Unknown'])
+  write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
+  p <- DimPlot(object = SeuratObj[,SeuratObj$pred!='Unknown'], label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
   ggsave(file.path(path_out, paste0(outprefix, "_pred.png")), p, width = 7, height = 5)
   write.table(data.frame(Cell=colnames(SeuratObj),Prediction=SeuratObj$pred,Cluster=SeuratObj$seurat_clusters),file.path(path_out, paste0(outprefix, "_predictions.txt")),col.names=TRUE,row.names=FALSE,quote=FALSE,sep='\t')
 }

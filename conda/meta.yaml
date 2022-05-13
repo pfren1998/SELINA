@@ -23,8 +23,9 @@ requirements:
     - r-data.table=1.14.0
     - r-optparse=1.7.1
     - imbalanced-learn=0.8.1 
-    - r-dbscan
-    - r-gtools
+    - r-dbscan=1.1.10
+    - r-gtools=3.9.2
+    - r-devtools=2.4.3
 
 about:
     license: GPL-3.0

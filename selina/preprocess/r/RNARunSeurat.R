@@ -64,5 +64,6 @@ RNARunSeurat <- function(inputMat, project,
     fwrite(single_exprmat, file.path(outdir, paste0(outprefix, "_single_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
     fwrite(cluster_exprmat, file.path(outdir, paste0(outprefix, "_cluster_expr.txt")), row.names = FALSE, col.names = TRUE, sep = '\t', quote = FALSE)
   }
-  return(SeuratObj)
+  cluster.genes <- FindMarkers(object = SeuratObj, cluster = SeuratObj$seurat_clusters)
+  return(list(SeuratObj,cluster.genes))
 }
