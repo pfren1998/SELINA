@@ -26,8 +26,7 @@ conda install pytorch cudatoolkit
 
 ### Preprocess of training data
 
-Before you start to run SELINA, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference dataset, you should have 2 paired files, one is named as xx_expr.txt, this file contains the gene expression profile, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell.
-For the meta file, the first column is celltype of each cell, and the second column is the sequencing platform of each cell. Note that if you choose to use our pretarined models, this step can be skipped.
+Before you start to run SELINA, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference dataset, you should have 2 paired files, one is named as xx_expr.txt, this file contains the gene expression profile, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell, the gene names should be symbol names and mathced with hg38. For the meta file, the first column is celltype of each cell, and the second column is the sequencing platform of each cell. Note that if you choose to use our pretarined models, this step can be skipped.
 
 ```
 reference/
