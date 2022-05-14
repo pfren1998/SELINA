@@ -2,7 +2,7 @@
 
 ## Introduction
 
-SELINA is a deep learning-based framework for single cell assignment with multiple references. The algorithm consists of three main steps: cell type balancing, pre-training and fine-tuning. The rare cell types in reference data are first oversampled using SMOTE(Synthetic Minority Oversampling Technique), and then the reference data is trained with a supervised deep learning framework using MADA(Multi-Adversarial Domain Adaptation). An autoencoder is subsquently used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference data are transferred to the query data based on the fully-trained model. Along with the annotation algorithm, we also collect 136 datasets which were uniformly processed and curated to provide users with comprehensive pretrained models.
+SELINA is a deep learning-based framework for single cell assignment with multiple references. The algorithm consists of three main steps: cell type balancing, pre-training and fine-tuning. The rare cell types in reference data are first oversampled using SMOTE(Synthetic Minority Oversampling Technique), and then the reference data is trained with a supervised deep learning framework using MADA(Multi-Adversarial Domain Adaptation). An autoencoder is subsquently used to fine-tune the parameters of the pre-trained model. Finally, the labels from reference data are transferred to the query data based on the fully-trained model. Along with the annotation algorithm, we also collect 136 datasets which were uniformly processed and curated to provide users with comprehensive pre-trained models.
 
 ## Workflow
 
@@ -10,7 +10,7 @@ SELINA is a deep learning-based framework for single cell assignment with multip
 
 ## Installation
 
-- SELINA is supported for macOS, Linux and Windows and has been tested on linux system with the following dependency packages:
+- SELINA is available for macOS, Linux and Windows and has been tested on linux system with the following dependency packages:
   - python=3.9.7
   - datatable=0.11.1
   - pytorch=1.10.0
@@ -30,7 +30,7 @@ SELINA is a deep learning-based framework for single cell assignment with multip
   - r-gtools=3.9.2
   - r-devtools=2.4.3
 
-All the dependency packages will be installed simultaneously using the following command except for the presto which can be found at [presto](https://github.com/immunogenomics/presto).
+All the dependency packages will be installed simultaneously using the following commands except for the presto which can be found at [presto](https://github.com/immunogenomics/presto). The R package devtools used in the installation of presto has been included in SELINA, so you do not need to install devtools again.
 
 ```
 conda create -n Selina
@@ -38,7 +38,7 @@ conda activate Selina
 conda install -c pfren selina -c conda-forge -c r
 ```
 
-Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed.
+Note that if you have gpu on your device and want to use it, you should additionally run the following command after the above commands are executed.
 
 ```
 conda install pytorch cudatoolkit
@@ -48,8 +48,7 @@ conda install pytorch cudatoolkit
 
 ### Preprocess of query data
 
-This step is to normalize, convert the genes to hg38 and symbol, perform dimension reduction and clustering for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The gene by cell matrix is plain format. Below are examples of the commands for preprocessing different
-formats of input data.
+This step is to normalize, convert the genes to version hg38 and symbol names, perform dimension reduction and clustering for your data. SELINA supports 3 formats of input: `plain`,`h5` and `mtx`. The gene by cell matrix is in plain format. Below are examples of the commands for preprocessing different formats of input data.
 
 ```
 #mtx
@@ -62,17 +61,17 @@ selina preprocess --format h5 --matrix ./query/query_gene_count.h5 --mode single
 selina preprocess --format plain --matrix ./query/query_expr.txt --mode single --directory ./res/preprocess/
 ```
 
-Running this command will generate three output files:
+Running any one of the above commands will generate three output files:
 
-- `query_res.rds`: a seurat object
+- `query_res.rds`: a seurat object storing the normalized data, dimension reduction and clustering results
 
-- `query_{single/cluster}_expr.txt`: expression matrix of query data for the prediction step
+- `query_{single/cluster}_expr.txt`: expression matrix of query data in single-cell level or cluster level for the prediction step
 
-- `query_cluster.png`: UMAP plot with clustering results
+- `query_cluster.png`: UMAP plot with cluster labels
 
 - `query_cluster_DiffGenes.tsv`: differentially expressed genes for each cluster
 
-### Pretraining of the reference data
+### Pre-training of the reference data
 
 In this step you can train a model using your own reference data with the following command.
 
@@ -103,7 +102,7 @@ Running this command will output four files:
 
 - `query_DiffGenes.tsv`: differentially expressed genes for each cell type
 
-if the disease mode is on and the inpu data is single-cell level expression profile, four additional files will be generated, which are:
+if the input data is one single-cell level expression matrix, four additional files will be generated, which are:
 
 - `query_cluster_prob.png`: box plot indicating the prediction probability distribution of cells in each cluster
 

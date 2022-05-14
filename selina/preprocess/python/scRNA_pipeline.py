@@ -231,11 +231,16 @@ def GenerateRscript(count_file, gene_idtype, assembly, cell_cutoff, mito,
 
     #========save seurat object========
     script = '''
-        # save object
-        saveRDS(RNA.res[[1]], "%s_res.rds")
-        # output differentially expressed genes
-        write.table(RNA.res[[2]], file.path("%s", paste0("%s", "_cluster_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
-    ''' % (os.path.join(directory, outprefix), directory, outprefix)
+        if (is.list(RNA.res)){
+            # save object
+            saveRDS(RNA.res[[1]], "%s_res.rds")
+            # output differentially expressed genes
+            write.table(RNA.res[[2]], file.path("%s", paste0("%s", "_cluster_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
+        } else {
+            saveRDS(RNA.res, "%s_res.rds")
+        }
+    ''' % (os.path.join(directory, outprefix), directory, outprefix,
+           os.path.join(directory, outprefix))
     outf.write(script)
 
     #========finish srcipt output========

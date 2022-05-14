@@ -171,8 +171,10 @@ if (mode == 'single') {
   #generate plots and files indicating the prediction quality for each cluster
   cluster_quality(SeuratObj,filtered_label,pred_prob,path_out)
   #find differentially expressed genes for each cell type
-  cluster.genes <- FindMarkers(object = SeuratObj[,filtered_label!='Unknown'], celltypes = filtered_label[filtered_label!='Unknown'])
-  write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = F, sep = "\t", row.names = FALSE)
+  if (length(unique(filtered_label[filtered_label!='Unknown']))>1){
+    cluster.genes <- FindMarkers(object = SeuratObj[,filtered_label!='Unknown'], celltypes = filtered_label[filtered_label!='Unknown'])
+    write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = F, sep = "\t", row.names = FALSE)
+  }
   #output umap plot with predicted cell type labels
   SeuratObj$pred <- filtered_label
   p <- DimPlot(object = SeuratObj[,filtered_label!='Unknown'], label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
@@ -186,8 +188,10 @@ if (mode == 'single') {
   for (i in 1:length(pred_label)) {
     SeuratObj$pred[SeuratObj$seurat_clusters == as.character(i - 1)] = pred_label[i]
   }
-  cluster.genes <- FindMarkers(object = SeuratObj[,SeuratObj$pred!='Unknown'], celltypes = SeuratObj$pred[SeuratObj$pred!='Unknown'])
-  write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
+  if (length(unique(SeuratObj$pred[SeuratObj$pred!='Unknown']))>1){
+    cluster.genes <- FindMarkers(object = SeuratObj[,SeuratObj$pred!='Unknown'], celltypes = SeuratObj$pred[SeuratObj$pred!='Unknown'])
+    write.table(cluster.genes, file.path(path_out, paste0(outprefix, "_DiffGenes.tsv")), quote = FALSE, sep = "\t", row.names = FALSE)
+  }
   p <- DimPlot(object = SeuratObj[,SeuratObj$pred!='Unknown'], label = TRUE, pt.size = 0.2, repel = TRUE, group.by = 'pred')
   ggsave(file.path(path_out, paste0(outprefix, "_pred.png")), p, width = 7, height = 5)
   write.table(data.frame(Cell=colnames(SeuratObj),Prediction=SeuratObj$pred,Cluster=SeuratObj$seurat_clusters),file.path(path_out, paste0(outprefix, "_predictions.txt")),col.names=TRUE,row.names=FALSE,quote=FALSE,sep='\t')

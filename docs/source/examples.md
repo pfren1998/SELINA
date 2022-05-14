@@ -1,8 +1,10 @@
 # Demo
 
-This is an example to show you how to run selina step by step.
+Here we afford two examples to show you how to run SELINA step by step.
 
-## 1. Data
+## Example1
+
+### 1. Data
 
 The data used in this vignette are orgnized as the following directory tree shows.
 
@@ -63,12 +65,12 @@ Club Drop-seq
 Ciliated Drop-seq
 ```
 
-## 2. Preprocess of query data
+### 2. Preprocess of query data
 
 The following command is to normalize, match the assembly version with the reference data, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix.
 
 ```
-selina preprocess --format h5  --matrix query_data/GSE139534_Lung-Adult_10462_gene_count.h5 --gene-idtype symbol --assembly GRCh38 --count-cutoff 1000 --gene-cutoff 500 --cell-cutoff 10 --directory res --outprefix query --mode single
+selina preprocess --format h5  --matrix query_data/GSE139534_Lung-Adult_10462_gene_count.h5 --mode single
 ```
 
 ```
@@ -190,7 +192,7 @@ AL645608.1 0 0 0 0
 This step is to train a model using the reference data listed above.
 
 ```
-selina train --path_in reference_data --path_out res --outprefix pre-trained
+selina train --path-in reference_data --path-out res --outprefix pre-trained
 ```
 
 ```

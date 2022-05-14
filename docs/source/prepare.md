@@ -2,7 +2,7 @@
 
 ## Installation
 
-SELINA is supported for macOS, Linux and Windows.
+SELINA is available for macOS, Linux and Windows.
 To use SELINA, you should first build a conda environment.
 
 ```
@@ -10,13 +10,13 @@ conda create -n Selina
 conda activate Selina
 ```
 
-Then you can install SELINA using the following command(All the dependency packages will be installed simultaneously).
+All the dependency packages will be installed simultaneously using the following commands except for the presto which can be found at [presto](https://github.com/immunogenomics/presto). The R package devtools used in the installation of presto has been included in SELINA, so you do not need to install devtools again.
 
 ```
 conda install -c pfren selina -c conda-forge -c r
 ```
 
-Note that if you have gpu on your device, you should additionally run the following command after the above commands are executed.
+Note that if you have gpu on your device and want to use it, you should additionally run the following command after the above commands are executed.
 
 ```
 conda install pytorch cudatoolkit
@@ -26,8 +26,8 @@ conda install pytorch cudatoolkit
 
 ### Preprocess of training data
 
-Before you start to run SELINA, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference datasets, you should have 2 paired files, one is named as xx_expr.txt, this file contains the gene expression, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell.
-For the meta file, the first column is celltype of each cell, and the second column is platform of each cell. Note that if you choose to use our pretarined models, this step can be skipped.
+Before you start to run SELINA, make sure you have prepared the proper reference datasets, the format is shown as below. For each reference dataset, you should have 2 paired files, one is named as xx_expr.txt, this file contains the gene expression profile, and the other is named as xx_meta.txt. For the expression profile, the first column is gene which is followed by expression of each cell.
+For the meta file, the first column is celltype of each cell, and the second column is the sequencing platform of each cell. Note that if you choose to use our pretarined models, this step can be skipped.
 
 ```
 reference/
@@ -49,18 +49,21 @@ reference/
 
 ### Preprocess of query data
 
-In addition to the training data, you also need to preprocess the query data. This step is to normalize, match the assembly version with the reference data, perform dimension reduction for your data. We support 3 formats of input: `plain`,`h5` and `mtx`. The plain format is a gene by cell matrix. The full list of preprocessing commands is shown as below:
+This step is to normalize, convert the genes to version hg38 and symbol names, perform dimension reduction and clustering for your data. SELINA supports 3 formats of input: `plain`,`h5` and `mtx`. The gene by cell matrix is in plain format. The full list of preprocessing commands is shown as below:
 
 ```
-usage: selina preprocess [-h] [--format {h5,mtx,plain}] [--matrix MATRIX]
-                          [--separator {tab,space,comma}] [--feature FEATURE]
-                          [--gene-column GENE_COLUMN]
-                          [--gene-idtype {symbol,ensembl}] [--barcode BARCODE]
-                          [--assembly {GRCh38,GRCh37}]
-                          [--count-cutoff COUNT_CUTOFF]
-                          [--gene-cutoff GENE_CUTOFF]
-                          [--cell-cutoff CELL_CUTOFF] [--directory DIRECTORY]
-                          [--outprefix OUTPREFIX] --mode {single,cluster,both}
+usage: selina preprocess [-h] --format {h5,mtx,plain} [--matrix MATRIX]
+                         [--separator {tab,space,comma}] [--feature FEATURE]
+                         [--gene-column GENE_COLUMN] [--barcode BARCODE]
+                         [--gene-idtype {symbol,ensembl}]
+                         [--assembly {GRCh38,GRCh37}]
+                         [--count-cutoff COUNT_CUTOFF]
+                         [--gene-cutoff GENE_CUTOFF]
+                         [--cell-cutoff CELL_CUTOFF] [--mito]
+                         [--mito-cutoff MITO_CUTOFF]
+                         [--variable-genes VARIABLE_GENES] [--npcs NPCS]
+                         [--cluster-res CLUSTER_RES] [--directory DIRECTORY]
+                         [--outprefix OUTPREFIX] --mode {single,cluster,both}
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -83,12 +86,12 @@ Input files arguments:
   --gene-column GENE_COLUMN
                         If the format is 'mtx', please specify which column of
                         the feature file to use for gene names. DEFAULT: 2.
-  --gene-idtype {symbol,ensembl}
-                        Type of gene name, 'symbol' for gene symbol and
-                        'ensembl' for ensembl id. DEFAULT: symbol.
   --barcode BARCODE     Location of barcode file (required for the format of
                         'mtx'). Cell barcodes correspond to column indices of
                         count matrix. DEFAULT: barcodes.tsv.
+  --gene-idtype {symbol,ensembl}
+                        Type of gene name, 'symbol' for gene symbol and
+                        'ensembl' for ensembl id. DEFAULT: symbol.
   --assembly {GRCh38,GRCh37}
                         Assembly (GRCh38/hg38 and GRCh37/hg19). DEFAULT:
                         GRCh38.
@@ -103,6 +106,18 @@ Quality control arguments:
   --cell-cutoff CELL_CUTOFF
                         Cutoff for the number of cells covered by each gene.
                         DEFAULT: 10.
+  --mito                Filter cells with a high percentage of mitochondria
+                        genes.
+  --mito-cutoff MITO_CUTOFF
+                        Cutoff for the percentage of mitochondria genes in
+                        each cell. DEFAULT: 0.2.
+
+Process arguments:
+  --variable-genes VARIABLE_GENES
+                        Number of variable genes used in PCA. DEFAULT: 2000.
+  --npcs NPCS           Number of dimensions after PCA. DEFAULT: 30.
+  --cluster-res CLUSTER_RES
+                        Clustering resolution. DEFAULT: 0.6.
 
 Output arguments:
   --directory DIRECTORY
@@ -117,7 +132,12 @@ Output arguments:
                         profiles
 ```
 
-Note that you must choose the mode for the returned expression profiles. In this step two output files will be generated:
+Note that you must choose the mode for the returned expression profile(single-cell or cluster level). In this step four output files will be generated:
 
-- `query_res.rds` : a seurat object with gene expression profile and dimension reduction result
-- `query_{single/cluster}_expr.txt` : expression matrix of query data for the prediction step
+- `query_res.rds`: a seurat object storing the normalized data, dimension reduction and clustering results
+
+- `query_{single/cluster}_expr.txt`: expression matrix of query data in single-cell level or cluster level for the prediction step.
+
+- `query_cluster.png`: UMAP plot with cluster labels
+
+- `query_cluster_DiffGenes.tsv`: differentially expressed genes for each cluster
